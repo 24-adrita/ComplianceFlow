@@ -4,7 +4,7 @@
 
 ComplianceFlow is a multi-tenant enterprise compliance, audit, document, and renewal management platform.
 
-View your app in AI Studio: https://ai.studio/apps/a642bebe-a5e7-49fb-bd80-b7a3056e6dd3
+
 
 ## Local Development
 
