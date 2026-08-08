@@ -26,6 +26,7 @@ export class ComplianceController {
       );
 
       res.status(201).json({
+        success: true,
         status: 'success',
         statusCode: 201,
         message: 'Compliance record created successfully.',
@@ -50,6 +51,7 @@ export class ComplianceController {
       const record = await ComplianceService.getComplianceRecordById(req.params.id, req.user!);
 
       res.status(200).json({
+        success: true,
         status: 'success',
         statusCode: 200,
         message: 'Compliance record details retrieved.',
@@ -101,6 +103,7 @@ export class ComplianceController {
       );
 
       res.status(200).json({
+        success: true,
         status: 'success',
         statusCode: 200,
         message: 'Compliance records retrieved.',
@@ -132,6 +135,7 @@ export class ComplianceController {
       );
 
       res.status(200).json({
+        success: true,
         status: 'success',
         statusCode: 200,
         message: 'Compliance record updated successfully.',
@@ -169,6 +173,7 @@ export class ComplianceController {
       );
 
       res.status(200).json({
+        success: true,
         status: 'success',
         statusCode: 200,
         message: 'Supporting attachment uploaded successfully.',
@@ -198,6 +203,7 @@ export class ComplianceController {
       );
 
       res.status(200).json({
+        success: true,
         status: 'success',
         statusCode: 200,
         message: 'Supporting attachment removed successfully.',
@@ -227,9 +233,11 @@ export class ComplianceController {
       );
 
       res.status(200).json({
+        success: true,
         status: 'success',
         statusCode: 200,
         message: result.message,
+        data: null,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
@@ -250,10 +258,109 @@ export class ComplianceController {
       const result = await ComplianceService.getRecordHistory(req.params.id, req.user!);
 
       res.status(200).json({
+        success: true,
         status: 'success',
         statusCode: 200,
         message: 'Compliance record audit history retrieved.',
         data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * POST /api/v1/documents/:id/renew/request
+   * Step 1: Request renewal for document
+   */
+  static async requestRenewal(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const record = await ComplianceService.requestRenewal(
+        req.params.id,
+        req.body,
+        req.user!,
+        req.ip,
+        req.get('user-agent')
+      );
+
+      res.status(200).json({
+        success: true,
+        status: 'success',
+        statusCode: 200,
+        message: 'Document renewal request submitted successfully.',
+        data: { record },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * PATCH /api/v1/documents/:id/renew/process
+   * Step 2: Mark renewal as processing
+   */
+  static async processRenewal(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const record = await ComplianceService.processRenewal(
+        req.params.id,
+        req.body,
+        req.user!,
+        req.ip,
+        req.get('user-agent')
+      );
+
+      res.status(200).json({
+        success: true,
+        status: 'success',
+        statusCode: 200,
+        message: 'Document renewal status moved to processing.',
+        data: { record },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * PATCH /api/v1/documents/:id/renew/complete
+   * Step 3: Complete renewal, update issue/expiry dates & push to history
+   */
+  static async completeRenewal(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const fileBuffer = req.file ? req.file.buffer : undefined;
+      const fileName = req.file ? req.file.originalname : undefined;
+
+      const record = await ComplianceService.completeRenewal(
+        req.params.id,
+        req.body,
+        req.user!,
+        fileBuffer,
+        fileName,
+        req.ip,
+        req.get('user-agent')
+      );
+
+      res.status(200).json({
+        success: true,
+        status: 'success',
+        statusCode: 200,
+        message: 'Document renewal completed successfully.',
+        data: { record },
         timestamp: new Date().toISOString(),
       });
     } catch (error) {

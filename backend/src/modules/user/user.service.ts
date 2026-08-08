@@ -30,10 +30,10 @@ export class UserService {
       return; // SUPER_ADMIN can access everything
     }
 
-    if (currentUser.role === UserRole.COMPANY_ADMIN) {
+    if (currentUser.role === UserRole.ADMIN) {
       // Cannot manage SUPER_ADMIN
       if (targetUserRole === UserRole.SUPER_ADMIN) {
-        const error = new Error('Company Admins are strictly prohibited from managing Super Admin accounts.') as Error & { statusCode?: number };
+        const error = new Error('Admins are strictly prohibited from managing Super Admin accounts.') as Error & { statusCode?: number };
         error.statusCode = 403;
         throw error;
       }
@@ -105,10 +105,10 @@ export class UserService {
 
     // 2. Authorization / Company Tenant check
     let targetCompanyId = input.companyId;
-    if (currentUser.role === UserRole.COMPANY_ADMIN) {
+    if (currentUser.role === UserRole.ADMIN) {
       targetCompanyId = currentUser.companyId;
       if (input.role === UserRole.SUPER_ADMIN) {
-        const error = new Error('Company Admins cannot create Super Admin accounts.') as Error & { statusCode?: number };
+        const error = new Error('Admins cannot create Super Admin accounts.') as Error & { statusCode?: number };
         error.statusCode = 403;
         throw error;
       }
@@ -239,12 +239,12 @@ export class UserService {
 
     const filter: Record<string, unknown> = {};
 
-    // Multi-tenant scoping for COMPANY_ADMIN
-    if (currentUser.role === UserRole.COMPANY_ADMIN) {
+    // Multi-tenant scoping for ADMIN
+    if (currentUser.role === UserRole.ADMIN) {
       filter.companyId = currentUser.companyId
         ? new mongoose.Types.ObjectId(currentUser.companyId)
         : null;
-      filter.role = { $ne: UserRole.SUPER_ADMIN }; // Hide SUPER_ADMINs from Company Admin
+      filter.role = { $ne: UserRole.SUPER_ADMIN }; // Hide SUPER_ADMINs from Admin
     } else if (query.companyId) {
       filter.companyId = new mongoose.Types.ObjectId(query.companyId);
     }
@@ -259,7 +259,7 @@ export class UserService {
 
     if (query.role && currentUser.role === UserRole.SUPER_ADMIN) {
       filter.role = query.role;
-    } else if (query.role && currentUser.role === UserRole.COMPANY_ADMIN && query.role !== UserRole.SUPER_ADMIN) {
+    } else if (query.role && currentUser.role === UserRole.ADMIN && query.role !== UserRole.SUPER_ADMIN) {
       filter.role = query.role;
     }
 
@@ -339,8 +339,8 @@ export class UserService {
 
     if (input.companyId !== undefined) {
       if (input.companyId) {
-        if (currentUser.role === UserRole.COMPANY_ADMIN && input.companyId !== currentUser.companyId?.toString()) {
-          const error = new Error('Company Admins cannot assign users to other companies.') as Error & { statusCode?: number };
+        if (currentUser.role === UserRole.ADMIN && input.companyId !== currentUser.companyId?.toString()) {
+          const error = new Error('Admins cannot assign users to other companies.') as Error & { statusCode?: number };
           error.statusCode = 403;
           throw error;
         }
@@ -418,8 +418,8 @@ export class UserService {
 
     this.validateTenantAccess(currentUser, user.companyId, user.role);
 
-    if (currentUser.role === UserRole.COMPANY_ADMIN && input.companyId !== currentUser.companyId?.toString()) {
-      const error = new Error('Company Admins can only assign users to their own company.') as Error & { statusCode?: number };
+    if (currentUser.role === UserRole.ADMIN && input.companyId !== currentUser.companyId?.toString()) {
+      const error = new Error('Admins can only assign users to their own company.') as Error & { statusCode?: number };
       error.statusCode = 403;
       throw error;
     }

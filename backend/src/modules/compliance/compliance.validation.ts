@@ -84,5 +84,47 @@ export const listComplianceRecordsQuerySchema = z.object({
   }),
 });
 
+export const requestRenewalSchema = z.object({
+  params: z.object({
+    id: z.string({ message: 'Compliance record ID parameter is required' }),
+  }),
+  body: z.object({
+    notes: z.string().optional().default(''),
+    requestedExpiryDate: z.string().or(z.date()).optional(),
+    renewalCost: z.number().min(0).optional().default(0),
+    vendorInfo: z.string().optional().default(''),
+  }),
+});
+
+export const processRenewalSchema = z.object({
+  params: z.object({
+    id: z.string({ message: 'Compliance record ID parameter is required' }),
+  }),
+  body: z.object({
+    assignedVendor: z.string().optional().default(''),
+    assignedTo: z.string().optional(),
+    processingNotes: z.string().optional().default(''),
+    estimatedCompletionDate: z.string().or(z.date()).optional(),
+    renewalCost: z.number().min(0).optional(),
+  }),
+});
+
+export const completeRenewalSchema = z.object({
+  params: z.object({
+    id: z.string({ message: 'Compliance record ID parameter is required' }),
+  }),
+  body: z.object({
+    newIssueDate: z.string().or(z.date()).optional(),
+    newExpiryDate: z.string({ message: 'New expiry date is required' }).or(z.date()),
+    newLicenseNumber: z.string().optional(),
+    renewalCost: z.number().min(0).optional().default(0),
+    vendorInfo: z.string().optional().default(''),
+    notes: z.string().optional().default(''),
+  }),
+});
+
 export type CreateComplianceRecordInput = z.infer<typeof createComplianceRecordSchema>['body'];
 export type UpdateComplianceRecordInput = z.infer<typeof updateComplianceRecordSchema>['body'];
+export type RequestRenewalInput = z.infer<typeof requestRenewalSchema>['body'];
+export type ProcessRenewalInput = z.infer<typeof processRenewalSchema>['body'];
+export type CompleteRenewalInput = z.infer<typeof completeRenewalSchema>['body'];

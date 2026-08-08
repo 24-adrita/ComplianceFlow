@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
-import { UserRole, UserStatus } from '../../common/types/role.types.js';
+import { UserStatus } from '../../common/types/role.types.js';
+import { ROLES, UserRole } from '../../constants/roles.js';
 
 export interface IUser extends Document {
   _id: mongoose.Types.ObjectId;
@@ -48,8 +49,8 @@ const UserSchema = new Schema<IUser>(
     },
     role: {
       type: String,
-      enum: Object.values(UserRole),
-      default: UserRole.EMPLOYEE,
+      enum: Object.values(ROLES),
+      default: ROLES.EMPLOYEE,
       required: true,
       index: true,
     },

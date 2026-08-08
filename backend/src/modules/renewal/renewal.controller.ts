@@ -26,6 +26,7 @@ export class RenewalController {
       );
 
       res.status(201).json({
+        success: true,
         status: 'success',
         statusCode: 201,
         message: 'Renewal request created successfully.',
@@ -50,6 +51,7 @@ export class RenewalController {
       const renewal = await RenewalService.getRenewalById(req.params.id, req.user!);
 
       res.status(200).json({
+        success: true,
         status: 'success',
         statusCode: 200,
         message: 'Renewal request details retrieved.',
@@ -105,6 +107,7 @@ export class RenewalController {
       );
 
       res.status(200).json({
+        success: true,
         status: 'success',
         statusCode: 200,
         message: 'Renewal requests retrieved successfully.',
@@ -136,6 +139,7 @@ export class RenewalController {
       );
 
       res.status(200).json({
+        success: true,
         status: 'success',
         statusCode: 200,
         message: 'Renewal request updated successfully.',
@@ -166,6 +170,7 @@ export class RenewalController {
       );
 
       res.status(200).json({
+        success: true,
         status: 'success',
         statusCode: 200,
         message: `Renewal status successfully transitioned to ${renewal.status}.`,
@@ -203,6 +208,7 @@ export class RenewalController {
       );
 
       res.status(200).json({
+        success: true,
         status: 'success',
         statusCode: 200,
         message: 'Supporting attachment uploaded successfully.',
@@ -232,6 +238,7 @@ export class RenewalController {
       );
 
       res.status(200).json({
+        success: true,
         status: 'success',
         statusCode: 200,
         message: 'Supporting attachment removed successfully.',
@@ -261,9 +268,11 @@ export class RenewalController {
       );
 
       res.status(200).json({
+        success: true,
         status: 'success',
         statusCode: 200,
         message: result.message,
+        data: null,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
@@ -284,6 +293,7 @@ export class RenewalController {
       const result = await RenewalService.getRenewalHistory(req.params.id, req.user!);
 
       res.status(200).json({
+        success: true,
         status: 'success',
         statusCode: 200,
         message: 'Renewal workflow history retrieved.',

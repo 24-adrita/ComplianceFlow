@@ -10,6 +10,9 @@ import {
   updateComplianceRecordSchema,
   complianceIdParamSchema,
   listComplianceRecordsQuerySchema,
+  requestRenewalSchema,
+  processRenewalSchema,
+  completeRenewalSchema,
 } from './compliance.validation.js';
 
 // Configure Multer for in-memory file uploads (PDF & Images)
@@ -57,7 +60,7 @@ router.get('/:id/history', validateRequest(complianceIdParamSchema), ComplianceC
 // 4. Create Compliance Record with optional attachment
 router.post(
   '/',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.COMPLIANCE_OFFICER, UserRole.DEPARTMENT_MANAGER),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER),
   upload.single('file'),
   validateRequest(createComplianceRecordSchema),
   ComplianceController.createComplianceRecord
@@ -66,7 +69,7 @@ router.post(
 // 5. Update Compliance Record
 router.patch(
   '/:id',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.COMPLIANCE_OFFICER, UserRole.DEPARTMENT_MANAGER),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER),
   validateRequest(updateComplianceRecordSchema),
   ComplianceController.updateComplianceRecord
 );
@@ -74,7 +77,7 @@ router.patch(
 // 6. Upload / Replace Supporting Attachment
 router.post(
   '/:id/attachment',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.COMPLIANCE_OFFICER, UserRole.DEPARTMENT_MANAGER),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER),
   upload.single('file'),
   validateRequest(complianceIdParamSchema),
   ComplianceController.uploadAttachment
@@ -83,7 +86,7 @@ router.post(
 // 7. Remove Supporting Attachment
 router.delete(
   '/:id/attachment',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.COMPLIANCE_OFFICER, UserRole.DEPARTMENT_MANAGER),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER),
   validateRequest(complianceIdParamSchema),
   ComplianceController.removeAttachment
 );
@@ -91,7 +94,7 @@ router.delete(
 // 8. Generate QR Verification Code for Document
 router.post(
   '/:id/generate-qr',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.COMPLIANCE_OFFICER, UserRole.DEPARTMENT_MANAGER),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER),
   validateRequest(complianceIdParamSchema),
   QrController.generateQrCode
 );
@@ -99,9 +102,34 @@ router.post(
 // 9. Soft Delete Compliance Record
 router.delete(
   '/:id',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.COMPLIANCE_OFFICER),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER),
   validateRequest(complianceIdParamSchema),
   ComplianceController.deleteComplianceRecord
+);
+
+// 10. Step 1: Request Renewal
+router.post(
+  '/:id/renew/request',
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE),
+  validateRequest(requestRenewalSchema),
+  ComplianceController.requestRenewal
+);
+
+// 11. Step 2: Process Renewal
+router.patch(
+  '/:id/renew/process',
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER),
+  validateRequest(processRenewalSchema),
+  ComplianceController.processRenewal
+);
+
+// 12. Step 3: Complete Renewal
+router.patch(
+  '/:id/renew/complete',
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER),
+  upload.single('file'),
+  validateRequest(completeRenewalSchema),
+  ComplianceController.completeRenewal
 );
 
 export default router;

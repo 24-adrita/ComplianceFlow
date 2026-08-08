@@ -2,7 +2,10 @@ import { Router } from 'express';
 import DashboardController from './dashboard.controller.js';
 import validateRequest from '../../middlewares/validate.middleware.js';
 import { authenticate } from '../../middlewares/auth.middleware.js';
-import { dashboardOverviewQuerySchema } from './dashboard.validation.js';
+import {
+  dashboardOverviewQuerySchema,
+  dashboardChartsQuerySchema,
+} from './dashboard.validation.js';
 
 const router = Router();
 
@@ -11,7 +14,7 @@ router.use(authenticate);
 
 /**
  * GET /api/v1/dashboard/overview
- * Dashboard Overview API (Cards, Health Score, Risk, Forecast, Charts, Recent Activity)
+ * Dashboard Overview API (Cards, Health Score, Risk, Forecast, High Risk Docs, Recent Activity)
  */
 router.get(
   '/overview',
@@ -19,4 +22,15 @@ router.get(
   DashboardController.getOverview
 );
 
+/**
+ * GET /api/v1/dashboard/charts
+ * Dashboard Charts API (Category breakdown, Monthly renewal trend, Department compliance)
+ */
+router.get(
+  '/charts',
+  validateRequest(dashboardChartsQuerySchema),
+  DashboardController.getCharts
+);
+
 export default router;
+

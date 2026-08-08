@@ -217,11 +217,11 @@ export const runEmailReminderJob = async (): Promise<{
       }
     }
 
-    // If no specific responsible person or inactive, fallback to Company Admins & Compliance Officers
+    // If no specific responsible person or inactive, fallback to Admins & Managers
     if (recipients.length === 0 && record.companyId) {
       recipients = await UserModel.find({
         companyId: record.companyId,
-        role: { $in: [UserRole.COMPANY_ADMIN, UserRole.COMPLIANCE_OFFICER, UserRole.SUPER_ADMIN] },
+        role: { $in: [UserRole.ADMIN, UserRole.MANAGER, UserRole.SUPER_ADMIN] },
         status: UserStatus.ACTIVE,
       });
     }

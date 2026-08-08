@@ -1,5 +1,13 @@
 import { z } from 'zod';
-import { UserRole, UserStatus } from '../../common/types/role.types.js';
+import { UserStatus } from '../../common/types/role.types.js';
+import { ROLES } from '../../constants/roles.js';
+
+const ALLOWED_ROLES = [
+  ROLES.SUPER_ADMIN,
+  ROLES.ADMIN,
+  ROLES.MANAGER,
+  ROLES.EMPLOYEE,
+] as const;
 
 export const createUserSchema = z.object({
   body: z.object({
@@ -18,7 +26,7 @@ export const createUserSchema = z.object({
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
         'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
       ),
-    role: z.nativeEnum(UserRole, { message: 'Invalid user role specified' }).optional().default(UserRole.EMPLOYEE),
+    role: z.enum(ALLOWED_ROLES, { message: 'Invalid user role specified' }).optional().default(ROLES.EMPLOYEE),
     companyId: z.string().optional(),
     departmentId: z.string().optional(),
     phoneNumber: z.string().optional(),
@@ -37,7 +45,7 @@ export const updateUserSchema = z.object({
     avatarUrl: z.string().url('Avatar URL must be a valid URL').optional().or(z.literal('')),
     companyId: z.string().nullable().optional(),
     departmentId: z.string().nullable().optional(),
-    role: z.nativeEnum(UserRole).optional(),
+    role: z.enum(ALLOWED_ROLES).optional(),
     status: z.nativeEnum(UserStatus).optional(),
   }),
 });
@@ -66,7 +74,7 @@ export const assignRoleSchema = z.object({
     id: z.string({ message: 'User ID parameter is required' }),
   }),
   body: z.object({
-    role: z.nativeEnum(UserRole, { message: 'Valid user role is required' }),
+    role: z.enum(ALLOWED_ROLES, { message: 'Valid user role is required' }),
   }),
 });
 
@@ -108,7 +116,7 @@ export const listUsersQuerySchema = z.object({
     search: z.string().optional(),
     companyId: z.string().optional(),
     departmentId: z.string().optional(),
-    role: z.nativeEnum(UserRole).optional(),
+    role: z.enum(ALLOWED_ROLES).optional(),
     status: z.nativeEnum(UserStatus).optional(),
   }),
 });

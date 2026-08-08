@@ -28,11 +28,9 @@ export class RenewalService {
     }
 
     if (
-      currentUser.role === UserRole.COMPANY_ADMIN ||
-      currentUser.role === UserRole.COMPLIANCE_OFFICER ||
-      currentUser.role === UserRole.DEPARTMENT_MANAGER ||
-      currentUser.role === UserRole.EMPLOYEE ||
-      currentUser.role === UserRole.AUDITOR
+      currentUser.role === UserRole.ADMIN ||
+      currentUser.role === UserRole.MANAGER ||
+      currentUser.role === UserRole.EMPLOYEE
     ) {
       if (!currentUser.companyId || companyId.toString() !== currentUser.companyId.toString()) {
         const error = new Error('Access Denied: You cannot view or modify renewal requests outside your company tenant.') as Error & { statusCode?: number };

@@ -376,7 +376,7 @@ export class SearchService {
           if (tenantCompanyId) filter.companyId = tenantCompanyId;
 
           // Non-admin users only see notifications sent to them
-          if (![UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.COMPLIANCE_OFFICER].includes(currentUser.role as UserRole)) {
+          if (!([UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER] as UserRole[]).includes(currentUser.role as UserRole)) {
             filter.recipientId = new mongoose.Types.ObjectId(currentUser.id);
           }
 

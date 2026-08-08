@@ -4,6 +4,7 @@ import CompanyModel from '../company/company.model.js';
 import DepartmentModel from '../company/department.model.js';
 import UserModel from '../user/user.model.js';
 import AuditLogModel from '../audit/audit.model.js';
+import RenewalRecordModel from '../renewal/renewal.model.js';
 import { uploadToCloudinary, deleteFromCloudinary } from '../../config/cloudinary.js';
 import {
   AuditAction,
@@ -12,12 +13,16 @@ import {
   ComplianceStatus,
   PriorityLevel,
   RenewalFrequency,
+  RenewalStatus,
 } from '../../common/constants/enums.js';
 import { UserRole } from '../../common/types/role.types.js';
 import { AuthUser } from '../../common/types/express.types.js';
 import {
   CreateComplianceRecordInput,
   UpdateComplianceRecordInput,
+  RequestRenewalInput,
+  ProcessRenewalInput,
+  CompleteRenewalInput,
 } from './compliance.validation.js';
 
 export class ComplianceService {
@@ -56,11 +61,9 @@ export class ComplianceService {
     }
 
     if (
-      currentUser.role === UserRole.COMPANY_ADMIN ||
-      currentUser.role === UserRole.COMPLIANCE_OFFICER ||
-      currentUser.role === UserRole.DEPARTMENT_MANAGER ||
-      currentUser.role === UserRole.EMPLOYEE ||
-      currentUser.role === UserRole.AUDITOR
+      currentUser.role === UserRole.ADMIN ||
+      currentUser.role === UserRole.MANAGER ||
+      currentUser.role === UserRole.EMPLOYEE
     ) {
       if (!currentUser.companyId || companyId.toString() !== currentUser.companyId.toString()) {
         const error = new Error('Access Denied: You cannot view or modify compliance records outside your company tenant.') as Error & { statusCode?: number };
@@ -271,7 +274,8 @@ export class ComplianceService {
       .populate('departmentId', 'name code status')
       .populate('responsiblePersonId', 'name email role avatarUrl phoneNumber')
       .populate('createdBy', 'name email')
-      .populate('updatedBy', 'name email');
+      .populate('updatedBy', 'name email')
+      .populate('renewalHistory.completedBy', 'name email role');
 
     if (!record) {
       const error = new Error('Compliance record not found or has been deleted.') as Error & { statusCode?: number };
@@ -281,6 +285,20 @@ export class ComplianceService {
 
     // Validate multi-tenant tenant scope
     this.validateTenantScope(currentUser, record.companyId);
+
+    // If user is Employee, check assignment
+    if (currentUser.role === UserRole.EMPLOYEE) {
+      const respId = record.responsiblePersonId ? record.responsiblePersonId._id?.toString() || record.responsiblePersonId.toString() : '';
+      const deptId = record.departmentId ? record.departmentId._id?.toString() || record.departmentId.toString() : '';
+      const isAssigned =
+        respId === currentUser.id ||
+        (currentUser.departmentId && deptId === currentUser.departmentId.toString());
+      if (!isAssigned) {
+        const error = new Error('Access Denied: Employees can only view documents assigned to them or their department.') as Error & { statusCode?: number };
+        error.statusCode = 403;
+        throw error;
+      }
+    }
 
     return record;
   }
@@ -319,6 +337,17 @@ export class ComplianceService {
       filter.companyId = new mongoose.Types.ObjectId(query.companyId);
     }
 
+    // Employee restricted scoping
+    if (currentUser.role === UserRole.EMPLOYEE) {
+      const employeeConditions: Record<string, unknown>[] = [
+        { responsiblePersonId: new mongoose.Types.ObjectId(currentUser.id) },
+      ];
+      if (currentUser.departmentId) {
+        employeeConditions.push({ departmentId: new mongoose.Types.ObjectId(currentUser.departmentId) });
+      }
+      filter.$or = employeeConditions;
+    }
+
     if (query.departmentId) {
       filter.departmentId = new mongoose.Types.ObjectId(query.departmentId);
     }
@@ -341,12 +370,18 @@ export class ComplianceService {
 
     if (query.search) {
       const searchRegex = { $regex: query.search, $options: 'i' };
-      filter.$or = [
+      const searchConditions = [
         { documentName: searchRegex },
         { licenseNumber: searchRegex },
         { issuingAuthority: searchRegex },
         { notes: searchRegex },
       ];
+      if (filter.$or) {
+        filter.$and = [{ $or: filter.$or }, { $or: searchConditions }];
+        delete filter.$or;
+      } else {
+        filter.$or = searchConditions;
+      }
     }
 
     // Sort configuration
@@ -654,6 +689,285 @@ export class ComplianceService {
       licenseNumber: record.licenseNumber,
       history: auditLogs,
     };
+  }
+
+  /**
+   * Step 1: Request Renewal (PENDING_RENEWAL)
+   */
+  static async requestRenewal(
+    recordId: string,
+    input: RequestRenewalInput,
+    currentUser: AuthUser,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<IComplianceRecord> {
+    const record = await ComplianceRecordModel.findOne({ _id: recordId, isDeleted: false });
+
+    if (!record) {
+      const error = new Error('Compliance record not found or has been deleted.') as Error & { statusCode?: number };
+      error.statusCode = 404;
+      throw error;
+    }
+
+    this.validateTenantScope(currentUser, record.companyId);
+
+    if (currentUser.role === UserRole.EMPLOYEE) {
+      const respId = record.responsiblePersonId ? record.responsiblePersonId._id?.toString() || record.responsiblePersonId.toString() : '';
+      const deptId = record.departmentId ? record.departmentId._id?.toString() || record.departmentId.toString() : '';
+      const isAssigned =
+        respId === currentUser.id ||
+        (currentUser.departmentId && deptId === currentUser.departmentId.toString());
+      if (!isAssigned) {
+        const error = new Error('Access Denied: Employees can only request renewals for documents assigned to them or their department.') as Error & { statusCode?: number };
+        error.statusCode = 403;
+        throw error;
+      }
+    }
+
+    record.status = ComplianceStatus.PENDING_RENEWAL;
+    if (input.notes) {
+      record.notes = record.notes ? `${record.notes}\n[Renewal Request]: ${input.notes}` : input.notes;
+    }
+    record.updatedBy = currentUser.id as unknown as IComplianceRecord['updatedBy'];
+    await record.save();
+
+    const renewalNum = `RNW-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const calcNextExpiry = input.requestedExpiryDate
+      ? new Date(input.requestedExpiryDate)
+      : new Date(new Date(record.expiryDate).setFullYear(new Date(record.expiryDate).getFullYear() + 1));
+
+    await RenewalRecordModel.create({
+      complianceId: record._id,
+      companyId: record.companyId,
+      departmentId: record.departmentId,
+      renewalNumber: renewalNum,
+      requestedBy: new mongoose.Types.ObjectId(currentUser.id),
+      previousExpiryDate: record.expiryDate,
+      newExpiryDate: calcNextExpiry,
+      renewalCost: input.renewalCost || 0,
+      status: RenewalStatus.PENDING_RENEWAL,
+      notes: input.notes || '',
+      createdBy: new mongoose.Types.ObjectId(currentUser.id),
+      statusHistory: [
+        {
+          status: RenewalStatus.PENDING_RENEWAL,
+          changedBy: new mongoose.Types.ObjectId(currentUser.id),
+          comment: input.notes || 'Renewal requested',
+          changedAt: new Date(),
+        },
+      ],
+    });
+
+    await AuditLogModel.create({
+      companyId: record.companyId,
+      userId: currentUser.id,
+      userEmail: currentUser.email,
+      userRole: currentUser.role,
+      action: AuditAction.RENEW,
+      entity: AuditEntity.COMPLIANCE_RECORD,
+      entityId: record._id.toString(),
+      details: {
+        status: ComplianceStatus.PENDING_RENEWAL,
+        notes: input.notes,
+        renewalNumber: renewalNum,
+      },
+      ipAddress: ipAddress || '',
+      userAgent: userAgent || '',
+    });
+
+    return record;
+  }
+
+  /**
+   * Step 2: Process Renewal (PROCESSING)
+   */
+  static async processRenewal(
+    recordId: string,
+    input: ProcessRenewalInput,
+    currentUser: AuthUser,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<IComplianceRecord> {
+    const record = await ComplianceRecordModel.findOne({ _id: recordId, isDeleted: false });
+
+    if (!record) {
+      const error = new Error('Compliance record not found or has been deleted.') as Error & { statusCode?: number };
+      error.statusCode = 404;
+      throw error;
+    }
+
+    this.validateTenantScope(currentUser, record.companyId);
+
+    record.status = ComplianceStatus.PROCESSING;
+    if (input.processingNotes) {
+      record.notes = record.notes ? `${record.notes}\n[Processing Notes]: ${input.processingNotes}` : input.processingNotes;
+    }
+    record.updatedBy = currentUser.id as unknown as IComplianceRecord['updatedBy'];
+    await record.save();
+
+    const existingRenewal = await RenewalRecordModel.findOne({
+      complianceId: record._id,
+      status: { $in: [RenewalStatus.PENDING_RENEWAL, RenewalStatus.CREATED, RenewalStatus.REQUESTED] },
+      isDeleted: false,
+    }).sort({ createdAt: -1 });
+
+    if (existingRenewal) {
+      existingRenewal.status = RenewalStatus.PROCESSING;
+      if (input.assignedTo) existingRenewal.assignedTo = new mongoose.Types.ObjectId(input.assignedTo);
+      if (input.renewalCost !== undefined) existingRenewal.renewalCost = input.renewalCost;
+      if (input.processingNotes) {
+        existingRenewal.notes = existingRenewal.notes
+          ? `${existingRenewal.notes}\n${input.processingNotes}`
+          : input.processingNotes;
+      }
+      existingRenewal.statusHistory.push({
+        status: RenewalStatus.PROCESSING,
+        changedBy: new mongoose.Types.ObjectId(currentUser.id),
+        comment: input.processingNotes || 'Renewal moving to processing',
+        changedAt: new Date(),
+      });
+      await existingRenewal.save();
+    }
+
+    await AuditLogModel.create({
+      companyId: record.companyId,
+      userId: currentUser.id,
+      userEmail: currentUser.email,
+      userRole: currentUser.role,
+      action: AuditAction.STATUS_CHANGE,
+      entity: AuditEntity.COMPLIANCE_RECORD,
+      entityId: record._id.toString(),
+      details: {
+        status: ComplianceStatus.PROCESSING,
+        assignedVendor: input.assignedVendor,
+        assignedTo: input.assignedTo,
+        processingNotes: input.processingNotes,
+      },
+      ipAddress: ipAddress || '',
+      userAgent: userAgent || '',
+    });
+
+    return record;
+  }
+
+  /**
+   * Step 3: Complete Renewal (RENEWED / ACTIVE)
+   */
+  static async completeRenewal(
+    recordId: string,
+    input: CompleteRenewalInput,
+    currentUser: AuthUser,
+    fileBuffer?: Buffer,
+    fileName?: string,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<IComplianceRecord> {
+    const record = await ComplianceRecordModel.findOne({ _id: recordId, isDeleted: false });
+
+    if (!record) {
+      const error = new Error('Compliance record not found or has been deleted.') as Error & { statusCode?: number };
+      error.statusCode = 404;
+      throw error;
+    }
+
+    this.validateTenantScope(currentUser, record.companyId);
+
+    const prevIssueDate = record.issueDate;
+    const prevExpiryDate = record.expiryDate;
+    const newExpiryDate = new Date(input.newExpiryDate);
+    const newIssueDate = input.newIssueDate ? new Date(input.newIssueDate) : new Date();
+
+    if (newExpiryDate <= newIssueDate) {
+      const error = new Error('New expiry date must be after the issue date.') as Error & { statusCode?: number };
+      error.statusCode = 400;
+      throw error;
+    }
+
+    let attachmentUrl = record.supportingAttachmentUrl || '';
+    let attachmentPublicId = record.supportingAttachmentPublicId || '';
+
+    if (fileBuffer && fileName) {
+      const uploadResult = await uploadToCloudinary(fileBuffer, fileName, `company_${record.companyId}/compliance`);
+      attachmentUrl = uploadResult.url;
+      attachmentPublicId = uploadResult.publicId;
+    }
+
+    const yearVal = prevExpiryDate ? new Date(prevExpiryDate).getFullYear() : new Date().getFullYear();
+
+    record.renewalHistory.push({
+      year: yearVal,
+      previousExpiryDate: prevExpiryDate,
+      newExpiryDate: newExpiryDate,
+      previousIssueDate: prevIssueDate,
+      newIssueDate: newIssueDate,
+      completedBy: new mongoose.Types.ObjectId(currentUser.id),
+      completedAt: new Date(),
+      notes: input.notes || '',
+      supportingAttachmentUrl: attachmentUrl,
+      supportingAttachmentPublicId: attachmentPublicId,
+      vendorInfo: input.vendorInfo || '',
+      renewalCost: input.renewalCost || 0,
+    });
+
+    record.issueDate = newIssueDate;
+    record.expiryDate = newExpiryDate;
+    if (input.newLicenseNumber) {
+      record.licenseNumber = input.newLicenseNumber.trim();
+    }
+    if (attachmentUrl) {
+      record.supportingAttachmentUrl = attachmentUrl;
+      record.supportingAttachmentPublicId = attachmentPublicId;
+    }
+    record.status = ComplianceStatus.RENEWED;
+    record.updatedBy = currentUser.id as unknown as IComplianceRecord['updatedBy'];
+
+    await record.save();
+
+    const existingRenewal = await RenewalRecordModel.findOne({
+      complianceId: record._id,
+      status: { $in: [RenewalStatus.PROCESSING, RenewalStatus.PENDING_RENEWAL, RenewalStatus.CREATED, RenewalStatus.REQUESTED] },
+      isDeleted: false,
+    }).sort({ createdAt: -1 });
+
+    if (existingRenewal) {
+      existingRenewal.status = RenewalStatus.COMPLETED;
+      existingRenewal.completedAt = new Date();
+      existingRenewal.newExpiryDate = newExpiryDate;
+      existingRenewal.newIssueDate = newIssueDate;
+      if (input.newLicenseNumber) existingRenewal.newLicenseNumber = input.newLicenseNumber;
+      if (attachmentUrl) existingRenewal.attachmentUrl = attachmentUrl;
+      if (attachmentPublicId) existingRenewal.attachmentPublicId = attachmentPublicId;
+      if (input.renewalCost !== undefined) existingRenewal.renewalCost = input.renewalCost;
+
+      existingRenewal.statusHistory.push({
+        status: RenewalStatus.COMPLETED,
+        changedBy: new mongoose.Types.ObjectId(currentUser.id),
+        comment: input.notes || 'Renewal completed successfully',
+        changedAt: new Date(),
+      });
+      await existingRenewal.save();
+    }
+
+    await AuditLogModel.create({
+      companyId: record.companyId,
+      userId: currentUser.id,
+      userEmail: currentUser.email,
+      userRole: currentUser.role,
+      action: AuditAction.RENEW,
+      entity: AuditEntity.COMPLIANCE_RECORD,
+      entityId: record._id.toString(),
+      details: {
+        status: ComplianceStatus.RENEWED,
+        previousExpiryDate: prevExpiryDate,
+        newExpiryDate: newExpiryDate,
+        renewalCost: input.renewalCost,
+        vendorInfo: input.vendorInfo,
+      },
+      ipAddress: ipAddress || '',
+      userAgent: userAgent || '',
+    });
+
+    return record;
   }
 }
 

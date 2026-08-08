@@ -1,10 +1,14 @@
 import { z } from 'zod';
 
-export const dashboardOverviewQuerySchema = z.object({
+export const dashboardQuerySchema = z.object({
   query: z.object({
     companyId: z.string().optional(),
     departmentId: z.string().optional(),
   }),
 });
 
-export type DashboardOverviewQueryInput = z.infer<typeof dashboardOverviewQuerySchema>['query'];
+export const dashboardOverviewQuerySchema = dashboardQuerySchema;
+export const dashboardChartsQuerySchema = dashboardQuerySchema;
+
+export type DashboardQueryInput = z.infer<typeof dashboardQuerySchema>['query'];
+

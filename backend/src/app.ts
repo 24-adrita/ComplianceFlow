@@ -79,6 +79,7 @@ app.use('/api/v1/companies', companyRoutes);
 app.use('/api/v1/departments', departmentRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/compliance', complianceRoutes);
+app.use('/api/v1/documents', complianceRoutes);
 app.use('/api/v1/renewals', renewalRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
 app.use('/api/v1/notifications', notificationRoutes);

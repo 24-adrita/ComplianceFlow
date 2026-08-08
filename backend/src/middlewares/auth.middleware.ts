@@ -1,7 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest, AuthUser } from '../common/types/express.types.js';
 import { UserRole, UserStatus } from '../common/types/role.types.js';
-import { UserModel } from '../modules/user/user.model.ts';
+import { UserModel } from '../modules/user/user.model.js';
 import auth from '../config/auth.js';
 
 /**

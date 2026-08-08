@@ -54,7 +54,7 @@ router.get('/:id/history', validateRequest(renewalIdParamSchema), RenewalControl
 // 4. Create Renewal Request with optional attachment
 router.post(
   '/',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.COMPLIANCE_OFFICER, UserRole.DEPARTMENT_MANAGER),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER),
   upload.single('file'),
   validateRequest(createRenewalRequestSchema),
   RenewalController.createRenewalRequest
@@ -63,7 +63,7 @@ router.post(
 // 5. Update Renewal Details
 router.patch(
   '/:id',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.COMPLIANCE_OFFICER, UserRole.DEPARTMENT_MANAGER),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER),
   validateRequest(updateRenewalSchema),
   RenewalController.updateRenewal
 );
@@ -71,7 +71,7 @@ router.patch(
 // 6. Change Renewal Status / Transition Workflow State
 router.patch(
   '/:id/status',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.COMPLIANCE_OFFICER, UserRole.DEPARTMENT_MANAGER),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER),
   validateRequest(changeRenewalStatusSchema),
   RenewalController.changeRenewalStatus
 );
@@ -79,7 +79,7 @@ router.patch(
 // 7. Upload / Replace Supporting Attachment
 router.post(
   '/:id/attachment',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.COMPLIANCE_OFFICER, UserRole.DEPARTMENT_MANAGER),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER),
   upload.single('file'),
   validateRequest(renewalIdParamSchema),
   RenewalController.uploadAttachment
@@ -88,7 +88,7 @@ router.post(
 // 8. Remove Supporting Attachment
 router.delete(
   '/:id/attachment',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.COMPLIANCE_OFFICER, UserRole.DEPARTMENT_MANAGER),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER),
   validateRequest(renewalIdParamSchema),
   RenewalController.removeAttachment
 );
@@ -96,7 +96,7 @@ router.delete(
 // 9. Soft Delete Renewal Request
 router.delete(
   '/:id',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.COMPLIANCE_OFFICER),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER),
   validateRequest(renewalIdParamSchema),
   RenewalController.deleteRenewal
 );

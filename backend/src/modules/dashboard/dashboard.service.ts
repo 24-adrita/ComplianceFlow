@@ -13,7 +13,7 @@ import { AuthUser } from '../../common/types/express.types.js';
 
 export class DashboardService {
   /**
-   * Helper: Validate multi-tenant access control and resolve company scope
+   * Helper: Validate multi-tenant access control and resolve company/employee scope
    */
   private static getCompanyFilter(currentUser: AuthUser, requestedCompanyId?: string): Record<string, unknown> {
     const filter: Record<string, unknown> = { isDeleted: false };
@@ -31,11 +31,23 @@ export class DashboardService {
       filter.companyId = new mongoose.Types.ObjectId(currentUser.companyId);
     }
 
+    // Role Restriction for EMPLOYEE role
+    if (currentUser.role === UserRole.EMPLOYEE) {
+      const employeeConditions: Record<string, unknown>[] = [
+        { responsiblePersonId: new mongoose.Types.ObjectId(currentUser.id) },
+      ];
+      if (currentUser.departmentId) {
+        employeeConditions.push({ departmentId: new mongoose.Types.ObjectId(currentUser.departmentId) });
+      }
+      filter.$or = employeeConditions;
+    }
+
     return filter;
   }
 
   /**
    * Get Complete Dashboard Overview
+   * Includes: Summary Cards, Health Score, Expiry Forecast, Risk Summary, High Risk Docs & Recent Activities
    */
   static async getOverview(currentUser: AuthUser, requestedCompanyId?: string, requestedDepartmentId?: string) {
     const baseFilter = this.getCompanyFilter(currentUser, requestedCompanyId);
@@ -49,128 +61,190 @@ export class DashboardService {
     const in60Days = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
     const in90Days = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
 
-    // 1. Dashboard Cards Aggregation Pipeline
-    const cardStatsPipeline = [
+    // Single DB Roundtrip using MongoDB $facet pipeline
+    const facetResults = await ComplianceRecordModel.aggregate([
       { $match: baseFilter },
       {
-        $group: {
-          _id: null,
-          totalDocuments: { $sum: 1 },
-          activeDocuments: {
-            $sum: {
-              $cond: [
-                { $in: ['$status', [ComplianceStatus.ACTIVE, ComplianceStatus.COMPLIANT, ComplianceStatus.RENEWED]] },
-                1,
-                0,
-              ],
-            },
-          },
-          expiringSoonDocuments: {
-            $sum: {
-              $cond: [
-                {
-                  $or: [
-                    { $eq: ['$status', ComplianceStatus.EXPIRING_SOON] },
-                    { $eq: ['$status', ComplianceStatus.NEARING_EXPIRY] },
-                    {
-                      $and: [
-                        { $gt: ['$expiryDate', now] },
-                        { $lte: ['$expiryDate', in30Days] },
-                      ],
-                    },
-                  ],
+        $facet: {
+          cards: [
+            {
+              $group: {
+                _id: null,
+                totalDocuments: { $sum: 1 },
+                activeDocuments: {
+                  $sum: {
+                    $cond: [
+                      { $in: ['$status', [ComplianceStatus.ACTIVE, ComplianceStatus.COMPLIANT]] },
+                      1,
+                      0,
+                    ],
+                  },
                 },
-                1,
-                0,
-              ],
-            },
-          },
-          expiredDocuments: {
-            $sum: {
-              $cond: [
-                {
-                  $or: [
-                    { $eq: ['$status', ComplianceStatus.EXPIRED] },
-                    { $eq: ['$status', ComplianceStatus.NON_COMPLIANT] },
-                    { $lte: ['$expiryDate', now] },
-                  ],
+                expiringSoonDocuments: {
+                  $sum: {
+                    $cond: [
+                      {
+                        $or: [
+                          { $eq: ['$status', ComplianceStatus.EXPIRING_SOON] },
+                          { $eq: ['$status', ComplianceStatus.NEARING_EXPIRY] },
+                          {
+                            $and: [
+                              { $gt: ['$expiryDate', now] },
+                              { $lte: ['$expiryDate', in30Days] },
+                            ],
+                          },
+                        ],
+                      },
+                      1,
+                      0,
+                    ],
+                  },
                 },
-                1,
-                0,
-              ],
+                expiredDocuments: {
+                  $sum: {
+                    $cond: [
+                      {
+                        $or: [
+                          { $eq: ['$status', ComplianceStatus.EXPIRED] },
+                          { $eq: ['$status', ComplianceStatus.NON_COMPLIANT] },
+                          { $lte: ['$expiryDate', now] },
+                        ],
+                      },
+                      1,
+                      0,
+                    ],
+                  },
+                },
+                pendingRenewals: {
+                  $sum: {
+                    $cond: [
+                      { $in: ['$status', [ComplianceStatus.PENDING_RENEWAL, ComplianceStatus.PROCESSING, ComplianceStatus.PENDING]] },
+                      1,
+                      0,
+                    ],
+                  },
+                },
+                renewedDocuments: {
+                  $sum: {
+                    $cond: [
+                      { $eq: ['$status', ComplianceStatus.RENEWED] },
+                      1,
+                      0,
+                    ],
+                  },
+                },
+              },
             },
-          },
-          pendingRenewalDocuments: {
-            $sum: {
-              $cond: [
-                { $in: ['$status', [ComplianceStatus.PENDING_RENEWAL, ComplianceStatus.PROCESSING, ComplianceStatus.PENDING]] },
-                1,
-                0,
-              ],
+          ],
+          forecast: [
+            {
+              $group: {
+                _id: null,
+                next30Days: {
+                  $sum: {
+                    $cond: [
+                      { $and: [{ $gt: ['$expiryDate', now] }, { $lte: ['$expiryDate', in30Days] }] },
+                      1,
+                      0,
+                    ],
+                  },
+                },
+                next60Days: {
+                  $sum: {
+                    $cond: [
+                      { $and: [{ $gt: ['$expiryDate', in30Days] }, { $lte: ['$expiryDate', in60Days] }] },
+                      1,
+                      0,
+                    ],
+                  },
+                },
+                next90Days: {
+                  $sum: {
+                    $cond: [
+                      { $and: [{ $gt: ['$expiryDate', in60Days] }, { $lte: ['$expiryDate', in90Days] }] },
+                      1,
+                      0,
+                    ],
+                  },
+                },
+              },
             },
-          },
+          ],
+          risk: [
+            {
+              $group: {
+                _id: '$priority',
+                count: { $sum: 1 },
+              },
+            },
+          ],
         },
       },
-    ];
+    ]);
 
-    const cardStatsResult = await ComplianceRecordModel.aggregate(cardStatsPipeline);
-    const cardStats = cardStatsResult[0] || {
+    const facet = facetResults[0] || {};
+    const cardData = facet.cards?.[0] || {
       totalDocuments: 0,
       activeDocuments: 0,
       expiringSoonDocuments: 0,
       expiredDocuments: 0,
-      pendingRenewalDocuments: 0,
+      pendingRenewals: 0,
+      renewedDocuments: 0,
     };
 
-    // 2. Count Total Renewed Requests from RenewalRecordModel
+    const forecastData = facet.forecast?.[0] || {
+      next30Days: 0,
+      next60Days: 0,
+      next90Days: 0,
+    };
+
+    // Additional check for total renewed in RenewalRecordModel
     const renewalFilter: Record<string, unknown> = { isDeleted: false };
     if (baseFilter.companyId) renewalFilter.companyId = baseFilter.companyId;
     if (baseFilter.departmentId) renewalFilter.departmentId = baseFilter.departmentId;
 
-    const renewedCount = await RenewalRecordModel.countDocuments({
+    const renewedRecordsCount = await RenewalRecordModel.countDocuments({
       ...renewalFilter,
       status: { $in: [RenewalStatus.RENEWED, RenewalStatus.APPROVED, RenewalStatus.COMPLETED] },
     });
 
+    const totalRenewedCount = Math.max(cardData.renewedDocuments || 0, renewedRecordsCount);
+
     const cards = {
-      totalDocuments: cardStats.totalDocuments,
-      activeDocuments: cardStats.activeDocuments,
-      expiringSoon: cardStats.expiringSoonDocuments,
-      expiredDocuments: cardStats.expiredDocuments,
-      renewedDocuments: renewedCount,
-      pendingRenewals: cardStats.pendingRenewalDocuments,
+      totalDocuments: cardData.totalDocuments || 0,
+      activeDocuments: cardData.activeDocuments || 0,
+      expiringSoonDocuments: cardData.expiringSoonDocuments || 0,
+      expiredDocuments: cardData.expiredDocuments || 0,
+      pendingRenewals: cardData.pendingRenewals || 0,
+      renewedDocuments: totalRenewedCount,
     };
 
-    // 3. Compliance Health Score Calculation
-    const total = cardStats.totalDocuments || 1;
-    const activeWeight = cardStats.activeDocuments * 1.0;
-    const expiringWeight = cardStats.expiringSoonDocuments * 0.5;
-    const rawScore = ((activeWeight + expiringWeight) / total) * 100;
+    // 2. Compliance Health Score Calculation
+    // Formula: (Active + Renewed Documents) / Total Documents * 100
+    const activePlusRenewed = cards.activeDocuments + cards.renewedDocuments;
+    const totalDocs = cards.totalDocuments;
+
+    let rawScore = 100;
+    if (totalDocs > 0) {
+      rawScore = (activePlusRenewed / totalDocs) * 100;
+    }
     const healthScore = Math.min(100, Math.max(0, Math.round(rawScore * 10) / 10));
 
-    let healthRating = 'Critical';
+    let healthRating: 'Excellent' | 'Good' | 'Fair' | 'Critical' = 'Critical';
     if (healthScore >= 90) healthRating = 'Excellent';
     else if (healthScore >= 75) healthRating = 'Good';
-    else if (healthScore >= 50) healthRating = 'Needs Attention';
+    else if (healthScore >= 50) healthRating = 'Fair';
+    else healthRating = 'Critical';
 
     const healthSummary = {
       score: healthScore,
       rating: healthRating,
-      compliantPercentage: Math.round((cardStats.activeDocuments / total) * 1000) / 10,
+      activePlusRenewed,
+      totalDocuments: totalDocs,
+      formula: '(Active + Renewed Documents) / Total Documents * 100',
     };
 
-    // 4. Risk Summary & Distribution
-    const riskPipeline = [
-      { $match: baseFilter },
-      {
-        $group: {
-          _id: '$priority',
-          count: { $sum: 1 },
-        },
-      },
-    ];
-
-    const riskRaw = await ComplianceRecordModel.aggregate(riskPipeline);
+    // 3. Risk Summary & Distribution
     const riskMap: Record<string, number> = {
       [PriorityLevel.HIGH]: 0,
       [PriorityLevel.MEDIUM]: 0,
@@ -178,80 +252,48 @@ export class DashboardService {
       [PriorityLevel.CRITICAL]: 0,
     };
 
-    riskRaw.forEach((item) => {
+    const riskRaw = facet.risk || [];
+    riskRaw.forEach((item: { _id: string; count: number }) => {
       if (item._id) {
         riskMap[item._id] = item.count;
       }
     });
 
-    // Calculate critical risk documents (High Priority + Expired or Expiring within 15 days)
-    const criticalRiskCount = await ComplianceRecordModel.countDocuments({
-      ...baseFilter,
-      priority: { $in: [PriorityLevel.HIGH, PriorityLevel.CRITICAL] },
-      $or: [
-        { status: ComplianceStatus.EXPIRED },
-        { expiryDate: { $lte: new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000) } },
-      ],
-    });
-
     const riskSummary = {
-      critical: criticalRiskCount || riskMap[PriorityLevel.CRITICAL] || 0,
-      high: riskMap[PriorityLevel.HIGH] || 0,
-      medium: riskMap[PriorityLevel.MEDIUM] || 0,
       low: riskMap[PriorityLevel.LOW] || 0,
+      medium: riskMap[PriorityLevel.MEDIUM] || 0,
+      high: (riskMap[PriorityLevel.HIGH] || 0) + (riskMap[PriorityLevel.CRITICAL] || 0),
+      critical: riskMap[PriorityLevel.CRITICAL] || 0,
     };
 
-    // 5. Expiry Forecast (30, 60, 90 Days)
-    const [next30DaysCount, next60DaysCount, next90DaysCount] = await Promise.all([
-      ComplianceRecordModel.countDocuments({
-        ...baseFilter,
-        expiryDate: { $gt: now, $lte: in30Days },
-      }),
-      ComplianceRecordModel.countDocuments({
-        ...baseFilter,
-        expiryDate: { $gt: in30Days, $lte: in60Days },
-      }),
-      ComplianceRecordModel.countDocuments({
-        ...baseFilter,
-        expiryDate: { $gt: in60Days, $lte: in90Days },
-      }),
-    ]);
-
+    // 4. Expiry Forecast
     const expiryForecast = {
-      next30Days: next30DaysCount,
-      next60Days: next60DaysCount,
-      next90Days: next90DaysCount,
+      next30Days: forecastData.next30Days || 0,
+      next60Days: forecastData.next60Days || 0,
+      next90Days: forecastData.next90Days || 0,
     };
 
-    // 6. Upcoming Renewals (Top 5 Expiring Soonest)
-    const upcomingRenewals = await ComplianceRecordModel.find({
-      ...baseFilter,
-      expiryDate: { $gte: new Date(now.getTime() - 24 * 60 * 60 * 1000) },
-    })
-      .sort({ expiryDate: 1 })
-      .limit(5)
-      .populate('departmentId', 'name code')
-      .populate('responsiblePersonId', 'name email avatarUrl')
-      .populate('companyId', 'name code');
-
-    // 7. High Risk Documents (Top 5 requiring urgent attention)
+    // 5. Top High-Risk Documents requiring immediate action
     const highRiskDocuments = await ComplianceRecordModel.find({
       ...baseFilter,
       $or: [
         { priority: { $in: [PriorityLevel.HIGH, PriorityLevel.CRITICAL] } },
-        { status: ComplianceStatus.EXPIRED },
+        { status: { $in: [ComplianceStatus.EXPIRED, ComplianceStatus.NON_COMPLIANT] } },
         { expiryDate: { $lte: in30Days } },
       ],
     })
       .sort({ expiryDate: 1, priority: -1 })
-      .limit(5)
+      .limit(10)
       .populate('departmentId', 'name code')
       .populate('responsiblePersonId', 'name email avatarUrl');
 
-    // 8. Recent Activities (Audit Logs)
+    // 6. Recent Activities Widget (Last 10 audit logs)
     const auditFilter: Record<string, unknown> = {};
     if (baseFilter.companyId) {
       auditFilter.companyId = baseFilter.companyId;
+    }
+    if (currentUser.role === UserRole.EMPLOYEE) {
+      auditFilter.userId = new mongoose.Types.ObjectId(currentUser.id);
     }
 
     const recentActivities = await AuditLogModel.find(auditFilter)
@@ -259,7 +301,30 @@ export class DashboardService {
       .limit(10)
       .populate('userId', 'name email avatarUrl role');
 
-    // 9. Chart Data - Category Distribution
+    return {
+      cards,
+      healthSummary,
+      riskSummary,
+      expiryForecast,
+      highRiskDocuments,
+      recentActivities,
+    };
+  }
+
+  /**
+   * Get Dashboard Charts Analytics
+   * Includes: Category Distribution, Department Compliance, Monthly Renewal Trend
+   */
+  static async getCharts(currentUser: AuthUser, requestedCompanyId?: string, requestedDepartmentId?: string) {
+    const baseFilter = this.getCompanyFilter(currentUser, requestedCompanyId);
+
+    if (requestedDepartmentId) {
+      baseFilter.departmentId = new mongoose.Types.ObjectId(requestedDepartmentId);
+    }
+
+    const now = new Date();
+
+    // 1. Chart Data - Category Distribution
     const categoryPipeline = [
       { $match: baseFilter },
       {
@@ -272,14 +337,16 @@ export class DashboardService {
     ];
 
     const categoryRaw = await ComplianceRecordModel.aggregate(categoryPipeline);
-    const totalDocsForCat = cardStats.totalDocuments || 1;
+    const totalDocs = await ComplianceRecordModel.countDocuments(baseFilter);
+    const safeTotal = totalDocs || 1;
+
     const categoryDistribution = categoryRaw.map((item) => ({
-      category: item._id,
+      category: item._id || 'Uncategorized',
       count: item.count,
-      percentage: Math.round((item.count / totalDocsForCat) * 1000) / 10,
+      percentage: Math.round((item.count / safeTotal) * 1000) / 10,
     }));
 
-    // 10. Chart Data - Department-wise Compliance
+    // 2. Chart Data - Department-wise Compliance
     const deptCompanyFilter = baseFilter.companyId ? { companyId: baseFilter.companyId, isDeleted: false } : { isDeleted: false };
     const departments = await DepartmentModel.find(deptCompanyFilter).select('name code');
 
@@ -358,7 +425,11 @@ export class DashboardService {
       };
     });
 
-    // 11. Chart Data - Monthly Renewal Trend (Current Year)
+    // 3. Chart Data - Monthly Renewal Trend (Current Year)
+    const renewalFilter: Record<string, unknown> = { isDeleted: false };
+    if (baseFilter.companyId) renewalFilter.companyId = baseFilter.companyId;
+    if (baseFilter.departmentId) renewalFilter.departmentId = baseFilter.departmentId;
+
     const currentYear = now.getFullYear();
     const startOfYear = new Date(currentYear, 0, 1);
     const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59);
@@ -413,30 +484,13 @@ export class DashboardService {
       totalCost: Math.round(data.totalCost * 100) / 100,
     }));
 
-    // 12. Chart Data - Risk Distribution
-    const riskDistribution = [
-      { priority: PriorityLevel.CRITICAL, count: riskSummary.critical },
-      { priority: PriorityLevel.HIGH, count: riskSummary.high },
-      { priority: PriorityLevel.MEDIUM, count: riskSummary.medium },
-      { priority: PriorityLevel.LOW, count: riskSummary.low },
-    ];
-
     return {
-      cards,
-      healthSummary,
-      riskSummary,
-      expiryForecast,
-      upcomingRenewals,
-      highRiskDocuments,
-      recentActivities,
-      charts: {
-        monthlyRenewalTrend,
-        departmentCompliance,
-        categoryDistribution,
-        riskDistribution,
-      },
+      categoryDistribution,
+      departmentCompliance,
+      monthlyRenewalTrend,
     };
   }
 }
 
 export default DashboardService;
+

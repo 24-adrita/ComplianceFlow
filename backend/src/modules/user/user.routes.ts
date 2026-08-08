@@ -34,66 +34,66 @@ router.get('/', validateRequest(listUsersQuerySchema), UserController.listUsers)
 // 2. Get Single User Details
 router.get('/:id', validateRequest(userIdParamSchema), UserController.getUserById);
 
-// 3. Create New User (SUPER_ADMIN and COMPANY_ADMIN only)
+// 3. Create New User (SUPER_ADMIN and ADMIN only)
 router.post(
   '/',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN),
   validateRequest(createUserSchema),
   UserController.createUser
 );
 
-// 4. Update User Details (SUPER_ADMIN and COMPANY_ADMIN only)
+// 4. Update User Details (SUPER_ADMIN and ADMIN only)
 router.patch(
   '/:id',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN),
   validateRequest(updateUserSchema),
   UserController.updateUser
 );
 
-// 5. Assign Company to User (SUPER_ADMIN and COMPANY_ADMIN only)
+// 5. Assign Company to User (SUPER_ADMIN and ADMIN only)
 router.patch(
   '/:id/company',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN),
   validateRequest(assignCompanySchema),
   UserController.assignCompany
 );
 
-// 6. Assign Department to User (SUPER_ADMIN and COMPANY_ADMIN only)
+// 6. Assign Department to User (SUPER_ADMIN and ADMIN only)
 router.patch(
   '/:id/department',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN),
   validateRequest(assignDepartmentSchema),
   UserController.assignDepartment
 );
 
-// 7. Assign Role to User (SUPER_ADMIN and COMPANY_ADMIN only)
+// 7. Assign Role to User (SUPER_ADMIN and ADMIN only)
 router.patch(
   '/:id/role',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN),
   validateRequest(assignRoleSchema),
   UserController.assignRole
 );
 
-// 8. Soft Deactivate User Account (SUPER_ADMIN and COMPANY_ADMIN only)
+// 8. Soft Deactivate User Account (SUPER_ADMIN and ADMIN only)
 router.patch(
   '/:id/deactivate',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN),
   validateRequest(userIdParamSchema),
   UserController.deactivateUser
 );
 
-// 9. Reactivate User Account (SUPER_ADMIN and COMPANY_ADMIN only)
+// 9. Reactivate User Account (SUPER_ADMIN and ADMIN only)
 router.patch(
   '/:id/reactivate',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN),
   validateRequest(userIdParamSchema),
   UserController.reactivateUser
 );
 
-// 10. Admin Reset User Password (SUPER_ADMIN and COMPANY_ADMIN only)
+// 10. Admin Reset User Password (SUPER_ADMIN and ADMIN only)
 router.post(
   '/:id/reset-password',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN),
   validateRequest(adminResetPasswordSchema),
   UserController.adminResetPassword
 );

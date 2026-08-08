@@ -1,15 +1,9 @@
 /**
  * ComplianceFlow - User Role & Access Definitions
  */
+import { ROLES, UserRole } from '../../constants/roles.js';
 
-export enum UserRole {
-  SUPER_ADMIN = 'SUPER_ADMIN',
-  COMPANY_ADMIN = 'COMPANY_ADMIN',
-  COMPLIANCE_OFFICER = 'COMPLIANCE_OFFICER',
-  DEPARTMENT_MANAGER = 'DEPARTMENT_MANAGER',
-  AUDITOR = 'AUDITOR',
-  EMPLOYEE = 'EMPLOYEE',
-}
+export { ROLES, UserRole };
 
 export enum UserStatus {
   ACTIVE = 'ACTIVE',
@@ -18,13 +12,13 @@ export enum UserStatus {
   PENDING = 'PENDING',
 }
 
-export const ALL_ROLES: UserRole[] = Object.values(UserRole);
+export const ALL_ROLES: UserRole[] = Object.values(ROLES);
 
 /**
  * Role Permission Hierarchies and Capability Maps
  */
 export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
-  [UserRole.SUPER_ADMIN]: [
+  [ROLES.SUPER_ADMIN]: [
     'system:all',
     'company:create',
     'company:read',
@@ -35,7 +29,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'audit:all',
     'report:all',
   ],
-  [UserRole.COMPANY_ADMIN]: [
+  [ROLES.ADMIN]: [
     'company:read',
     'company:update',
     'department:all',
@@ -45,7 +39,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'audit:read',
     'notification:all',
   ],
-  [UserRole.COMPLIANCE_OFFICER]: [
+  [ROLES.MANAGER]: [
     'compliance:create',
     'compliance:read',
     'compliance:update',
@@ -53,23 +47,11 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'renewal:create',
     'renewal:read',
     'renewal:update',
-    'notification:read',
-    'audit:read',
-  ],
-  [UserRole.DEPARTMENT_MANAGER]: [
-    'compliance:read',
-    'compliance:create_department',
-    'renewal:read',
     'department:read',
     'notification:read',
-  ],
-  [UserRole.AUDITOR]: [
-    'compliance:read_audit',
     'audit:read',
-    'company:read_summary',
-    'report:read',
   ],
-  [UserRole.EMPLOYEE]: [
+  [ROLES.EMPLOYEE]: [
     'compliance:read_assigned',
     'notification:read_self',
   ],

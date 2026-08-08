@@ -27,42 +27,42 @@ router.get('/', validateRequest(listDepartmentsQuerySchema), DepartmentControlle
 // 2. Get Department Details (All authenticated users)
 router.get('/:id', validateRequest(departmentIdParamSchema), DepartmentController.getDepartmentById);
 
-// 3. Create Department (SUPER_ADMIN and COMPANY_ADMIN only)
+// 3. Create Department (SUPER_ADMIN and ADMIN only)
 router.post(
   '/',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN),
   validateRequest(createDepartmentSchema),
   DepartmentController.createDepartment
 );
 
-// 4. Update Department Details (SUPER_ADMIN and COMPANY_ADMIN only)
+// 4. Update Department Details (SUPER_ADMIN and ADMIN only)
 router.patch(
   '/:id',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN),
   validateRequest(updateDepartmentSchema),
   DepartmentController.updateDepartment
 );
 
-// 5. Assign Department Manager (SUPER_ADMIN and COMPANY_ADMIN only)
+// 5. Assign Department Manager (SUPER_ADMIN and ADMIN only)
 router.patch(
   '/:id/manager',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN),
   validateRequest(assignManagerSchema),
   DepartmentController.assignManager
 );
 
-// 6. Activate / Deactivate Department (SUPER_ADMIN and COMPANY_ADMIN only)
+// 6. Activate / Deactivate Department (SUPER_ADMIN and ADMIN only)
 router.patch(
   '/:id/status',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN),
   validateRequest(updateDepartmentStatusSchema),
   DepartmentController.updateStatus
 );
 
-// 7. Soft Delete Department (SUPER_ADMIN and COMPANY_ADMIN only)
+// 7. Soft Delete Department (SUPER_ADMIN and ADMIN only)
 router.delete(
   '/:id',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN),
   validateRequest(departmentIdParamSchema),
   DepartmentController.deleteDepartment
 );

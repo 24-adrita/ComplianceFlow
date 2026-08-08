@@ -28,50 +28,50 @@ router.get('/', validateRequest(listCompaniesQuerySchema), CompanyController.lis
 // 2. Get Company Details
 router.get('/:id', validateRequest(companyIdParamSchema), CompanyController.getCompanyById);
 
-// 3. Create Company (SUPER_ADMIN and COMPANY_ADMIN only)
+// 3. Create Company (SUPER_ADMIN and ADMIN only)
 router.post(
   '/',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN),
   validateRequest(createCompanySchema),
   CompanyController.createCompany
 );
 
-// 4. Update Company Details (SUPER_ADMIN and COMPANY_ADMIN only)
+// 4. Update Company Details (SUPER_ADMIN and ADMIN only)
 router.patch(
   '/:id',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN),
   validateRequest(updateCompanySchema),
   CompanyController.updateCompany
 );
 
-// 5. Upload Company Logo (SUPER_ADMIN and COMPANY_ADMIN only)
+// 5. Upload Company Logo (SUPER_ADMIN and ADMIN only)
 router.post(
   '/:id/logo',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN),
   validateRequest(uploadCompanyLogoSchema),
   CompanyController.uploadLogo
 );
 
-// 6. Update Company Settings (SUPER_ADMIN and COMPANY_ADMIN only)
+// 6. Update Company Settings (SUPER_ADMIN and ADMIN only)
 router.patch(
   '/:id/settings',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN),
   validateRequest(updateCompanySettingsSchema),
   CompanyController.updateSettings
 );
 
-// 7. Update Reminder Settings (SUPER_ADMIN and COMPANY_ADMIN only)
+// 7. Update Reminder Settings (SUPER_ADMIN and ADMIN only)
 router.patch(
   '/:id/reminder-settings',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN),
   validateRequest(updateReminderSettingsSchema),
   CompanyController.updateReminderSettings
 );
 
-// 8. Delete Company (Soft Delete - SUPER_ADMIN and COMPANY_ADMIN only)
+// 8. Delete Company (Soft Delete - SUPER_ADMIN and ADMIN only)
 router.delete(
   '/:id',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN),
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN),
   validateRequest(companyIdParamSchema),
   CompanyController.deleteCompany
 );

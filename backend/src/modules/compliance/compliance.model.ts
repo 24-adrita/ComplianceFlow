@@ -6,6 +6,22 @@ import {
   RenewalFrequency,
 } from '../../common/constants/enums.js';
 
+export interface IRenewalHistoryItem {
+  _id?: mongoose.Types.ObjectId;
+  year?: number;
+  previousExpiryDate: Date;
+  newExpiryDate: Date;
+  previousIssueDate?: Date;
+  newIssueDate?: Date;
+  completedBy: mongoose.Types.ObjectId;
+  completedAt: Date;
+  notes?: string;
+  supportingAttachmentUrl?: string;
+  supportingAttachmentPublicId?: string;
+  vendorInfo?: string;
+  renewalCost?: number;
+}
+
 export interface IComplianceRecord extends Document {
   _id: mongoose.Types.ObjectId;
   documentName: string;
@@ -25,6 +41,7 @@ export interface IComplianceRecord extends Document {
   supportingAttachmentPublicId?: string;
   qrCodeId?: string;
   autoRenewalEnabled: boolean;
+  renewalHistory: IRenewalHistoryItem[];
   isDeleted: boolean;
   deletedAt?: Date;
   deletedBy?: mongoose.Types.ObjectId;
@@ -36,6 +53,24 @@ export interface IComplianceRecord extends Document {
   // Calculated Virtual Properties
   daysRemaining?: number;
 }
+
+const RenewalHistoryItemSchema = new Schema<IRenewalHistoryItem>(
+  {
+    year: { type: Number },
+    previousExpiryDate: { type: Date, required: true },
+    newExpiryDate: { type: Date, required: true },
+    previousIssueDate: { type: Date },
+    newIssueDate: { type: Date },
+    completedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    completedAt: { type: Date, default: Date.now },
+    notes: { type: String, default: '' },
+    supportingAttachmentUrl: { type: String, default: '' },
+    supportingAttachmentPublicId: { type: String, default: '' },
+    vendorInfo: { type: String, default: '' },
+    renewalCost: { type: Number, default: 0 },
+  },
+  { timestamps: true }
+);
 
 const ComplianceRecordSchema = new Schema<IComplianceRecord>(
   {
@@ -127,6 +162,10 @@ const ComplianceRecordSchema = new Schema<IComplianceRecord>(
     autoRenewalEnabled: {
       type: Boolean,
       default: false,
+    },
+    renewalHistory: {
+      type: [RenewalHistoryItemSchema],
+      default: [],
     },
     isDeleted: {
       type: Boolean,

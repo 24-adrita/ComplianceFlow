@@ -89,7 +89,7 @@ export const auth = betterAuth({
     // 3. Admin & RBAC Plugin - Provides Built-in Role Verification Infrastructure
     admin({
       defaultRole: UserRole.EMPLOYEE,
-      adminRole: [UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN],
+      adminRole: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
     }),
   ],
 
