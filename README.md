@@ -16,7 +16,7 @@ ComplianceFlow is a multi-tenant enterprise compliance, audit, document, and ren
    ```
 2. Set environment variables in `.env.example` or `.env.local`:
    ```env
-   GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
+  
    APP_URL="http://localhost:3000"
    ```
 3. Start the dev server:
