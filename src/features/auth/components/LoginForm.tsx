@@ -159,19 +159,19 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
           <button
             type="button"
-            onClick={() => handleQuickFill('admin@complianceflow.io', 'Admin123!')}
-            className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-blue-500 text-left transition-colors flex flex-col"
+            onClick={() => handleQuickFill('admin@compliance.com.bd', 'Admin123!')}
+            className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-slate-400 text-left transition-colors flex flex-col"
           >
-            <span className="font-semibold text-slate-800 dark:text-slate-200">Super Admin</span>
-            <span className="text-[10px] text-slate-400 truncate">admin@complianceflow.io</span>
+            <span className="font-semibold text-slate-800 dark:text-slate-200">Super Admin (Nusrat)</span>
+            <span className="text-[10px] text-slate-400 truncate">admin@compliance.com.bd</span>
           </button>
           <button
             type="button"
-            onClick={() => handleQuickFill('officer@acme.com', 'Officer123!')}
-            className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-blue-500 text-left transition-colors flex flex-col"
+            onClick={() => handleQuickFill('tanvir.ahmed@dhakatech.com.bd', 'Officer123!')}
+            className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-slate-400 text-left transition-colors flex flex-col"
           >
-            <span className="font-semibold text-slate-800 dark:text-slate-200">Compliance Officer</span>
-            <span className="text-[10px] text-slate-400 truncate">officer@acme.com</span>
+            <span className="font-semibold text-slate-800 dark:text-slate-200">Compliance Officer (Tanvir)</span>
+            <span className="text-[10px] text-slate-400 truncate">tanvir.ahmed@dhakatech.com.bd</span>
           </button>
         </div>
       </div>

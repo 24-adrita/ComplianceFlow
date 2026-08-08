@@ -21,6 +21,8 @@ import {
   SlidersHorizontal,
   Circle,
   HelpCircle,
+  User,
+  Lock,
 } from 'lucide-react';
 
 export type NavRoute =
@@ -35,7 +37,9 @@ export type NavRoute =
   | 'audit'
   | 'notifications'
   | 'qr_verify'
-  | 'search';
+  | 'search'
+  | 'profile'
+  | 'change_password';
 
 export interface SidebarProps {
   currentRoute: NavRoute;
@@ -97,84 +101,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const sections: NavSection[] = [
     {
-      title: 'Main Operations',
-      id: 'main',
+      title: 'Account & Security',
+      id: 'account',
       items: [
         {
-          id: 'dashboard',
-          label: 'Executive Dashboard',
-          icon: <LayoutDashboard className="w-4 h-4 shrink-0" />,
+          id: 'profile',
+          label: 'User Profile',
+          icon: <User className="w-4 h-4 shrink-0" />,
         },
         {
-          id: 'records',
-          label: 'Compliance Records',
-          icon: <FileCheck2 className="w-4 h-4 shrink-0" />,
-          badge: warningCount > 0 ? warningCount : undefined,
-          badgeVariant: 'amber',
-        },
-        {
-          id: 'renewals',
-          label: 'Renewal Workflows',
-          icon: <RefreshCw className="w-4 h-4 shrink-0" />,
-        },
-        {
-          id: 'calendar',
-          label: 'Compliance Calendar',
-          icon: <Calendar className="w-4 h-4 shrink-0" />,
-        },
-      ],
-    },
-    {
-      title: 'Organization',
-      id: 'org',
-      items: [
-        {
-          id: 'companies',
-          label: 'Tenant Companies',
-          icon: <Building2 className="w-4 h-4 shrink-0" />,
-        },
-        {
-          id: 'departments',
-          label: 'Department Management',
-          icon: <Building2 className="w-4 h-4 shrink-0" />,
-        },
-        {
-          id: 'users',
-          label: 'User Directory',
-          icon: <Users className="w-4 h-4 shrink-0" />,
-        },
-      ],
-    },
-    {
-      title: 'Intelligence & Audit',
-      id: 'intel',
-      items: [
-        {
-          id: 'reports',
-          label: 'Analytics & Reports',
-          icon: <FileSpreadsheet className="w-4 h-4 shrink-0" />,
-        },
-        {
-          id: 'audit',
-          label: 'Audit Trail',
-          icon: <History className="w-4 h-4 shrink-0" />,
-        },
-        {
-          id: 'notifications',
-          label: 'In-App Alerts',
-          icon: <Bell className="w-4 h-4 shrink-0" />,
-          badge: unreadCount > 0 ? unreadCount : undefined,
-          badgeVariant: 'rose',
-        },
-        {
-          id: 'qr_verify',
-          label: 'Public QR Verify',
-          icon: <QrCode className="w-4 h-4 shrink-0" />,
-        },
-        {
-          id: 'search',
-          label: 'Global Search',
-          icon: <Search className="w-4 h-4 shrink-0" />,
+          id: 'change_password',
+          label: 'Change Password',
+          icon: <Lock className="w-4 h-4 shrink-0" />,
         },
       ],
     },
@@ -188,14 +126,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       className="h-screen bg-slate-900 text-slate-200 border-r border-slate-800/80 flex flex-col relative z-40 select-none shadow-xl overflow-hidden"
     >
       {/* Brand Header */}
-      <div className="h-16 px-4 flex items-center justify-between border-b border-slate-800/80 shrink-0 bg-slate-900/90 backdrop-blur-md">
+      <div className="h-16 px-4 flex items-center justify-between border-b border-slate-800/80 shrink-0 bg-slate-900/95">
         <div className="flex items-center gap-3 overflow-hidden">
           {/* Logo emblem */}
-          <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-500 text-white shadow-md shadow-blue-500/20 shrink-0">
-            <ShieldCheck className="w-5 h-5 text-white" aria-hidden="true" />
-            <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+          <div className="relative flex items-center justify-center w-9 h-9 rounded-lg bg-slate-800 border border-slate-700 text-white shrink-0 shadow-2xs">
+            <ShieldCheck className="w-5 h-5 text-slate-100" aria-hidden="true" />
+            <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
           </div>
 
@@ -209,14 +146,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 className="truncate"
               >
                 <div className="flex items-center gap-1.5">
-                  <h2 className="text-sm font-black text-white tracking-tight font-display">
+                  <h2 className="text-sm font-extrabold text-white tracking-tight font-display">
                     ComplianceFlow
                   </h2>
-                  <span className="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-blue-500/20 text-blue-300 border border-blue-500/30 uppercase tracking-wider">
+                  <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-slate-800 text-slate-300 border border-slate-700 uppercase tracking-wider">
                     PRO
                   </span>
                 </div>
-                <p className="text-[10px] font-medium text-slate-300 truncate">
+                <p className="text-[10px] font-medium text-slate-400 truncate">
                   Enterprise Regulatory Suite
                 </p>
               </motion.div>
@@ -305,25 +242,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         onClick={() => onNavigate(item.id)}
                         aria-current={isActive ? 'page' : undefined}
                         title={isCollapsed ? item.label : undefined}
-                        className={`group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+                        className={`group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all duration-150 focus:outline-none focus-visible:ring-1 focus-visible:ring-slate-400 ${
                           isActive
-                            ? 'bg-blue-600/20 text-white border border-blue-500/30 shadow-xs'
+                            ? 'bg-slate-800 text-white border border-slate-700 shadow-2xs'
                             : 'text-slate-300 hover:text-white hover:bg-slate-800/60 border border-transparent'
                         }`}
                       >
-                        {/* Active Glowing Left Accent Bar */}
+                        {/* Active Indicator Bar */}
                         {isActive && (
-                          <motion.span
-                            layoutId="activeSideGlow"
-                            className="absolute left-0 top-2 bottom-2 w-1 bg-gradient-to-b from-blue-400 to-indigo-500 rounded-r-full shadow-[0_0_10px_rgba(59,130,246,0.8)]"
-                          />
+                          <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-white rounded-r" />
                         )}
 
                         {/* Icon */}
                         <span
                           className={`transition-colors shrink-0 ${
                             isActive
-                              ? 'text-blue-400'
+                              ? 'text-white'
                               : 'text-slate-400 group-hover:text-slate-200'
                           }`}
                         >

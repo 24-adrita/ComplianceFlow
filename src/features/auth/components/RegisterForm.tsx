@@ -7,6 +7,7 @@ import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import PasswordStrengthIndicator from './PasswordStrengthIndicator';
 import apiClient from '../../../lib/api-client';
+import { useAuth } from '../../../context/AuthContext';
 import toast from 'react-hot-toast';
 
 const registerSchema = z
@@ -49,6 +50,7 @@ export interface RegisterFormProps {
 }
 
 export const RegisterForm: React.FC<RegisterFormProps> = ({ onNavigateLogin, onSuccess }) => {
+  const { login } = useAuth();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const {
@@ -90,9 +92,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onNavigateLogin, onS
       const res: any = await apiClient.post('/auth/register', payload);
 
       if (res && (res.status === 201 || res.data)) {
-        toast.success('Registration successful! You can now log in to your company portal.');
+        // Log in as the newly created user profile immediately
+        await login(data.email, data.password);
+        toast.success(`Account registered! Welcome, ${data.name}.`);
         if (onSuccess) onSuccess();
-        else if (onNavigateLogin) onNavigateLogin();
       }
     } catch (err: any) {
       const msg = err.response?.data?.message || err.message || 'Registration failed. Please try again.';

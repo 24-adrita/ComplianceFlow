@@ -3,13 +3,41 @@ import { DbStore } from './db';
 
 const router = Router();
 
+// Helper to extract active user ID from Request headers/tokens
+function extractUserId(req: Request): string {
+  const authHeader = req.headers['authorization'];
+  if (authHeader && authHeader.startsWith('Bearer mock_jwt_token_')) {
+    return authHeader.replace('Bearer mock_jwt_token_', '').trim();
+  }
+  const xUserId = req.headers['x-user-id'] as string;
+  if (xUserId) return xUserId.trim();
+  return '';
+}
+
+function getActorFromRequest(req: Request) {
+  const userId = extractUserId(req);
+  const user = (userId ? DbStore.getUserById(userId) : null) || DbStore.getUsers()[0];
+  if (user) {
+    return {
+      userId: user.id,
+      userName: user.name,
+      userRole: user.role
+    };
+  }
+  return {
+    userId: 'usr_admin',
+    userName: 'Nusrat Jahan',
+    userRole: 'super_admin'
+  };
+}
+
 // =====================================
 // 1. AUTHENTICATION & SESSION SIMULATION
 // =====================================
 router.post('/auth/login', (req: Request, res: Response) => {
   const { email } = req.body;
   const users = DbStore.getUsers();
-  const foundUser = users.find(u => u.email.toLowerCase() === (email || '').toLowerCase());
+  const foundUser = users.find(u => u.email.toLowerCase() === (email || '').toLowerCase().trim());
 
   if (foundUser) {
     DbStore.updateUser(foundUser.id, { lastLogin: new Date().toISOString() });
@@ -28,19 +56,22 @@ router.post('/auth/login', (req: Request, res: Response) => {
     return res.json({ success: true, user: foundUser, token: 'mock_jwt_token_' + foundUser.id });
   }
 
-  // Fallback default admin user login if unknown email
-  const defaultUser = users[0];
-  return res.json({ success: true, user: defaultUser, token: 'mock_jwt_token_' + defaultUser.id });
+  return res.status(401).json({ success: false, message: 'Invalid email or password. Account not found.' });
 });
 
 router.get('/auth/me', (req: Request, res: Response) => {
-  const userId = req.headers['x-user-id'] as string || 'usr_admin';
-  const user = DbStore.getUserById(userId) || DbStore.getUsers()[0];
+  const userId = extractUserId(req);
+  const user = (userId ? DbStore.getUserById(userId) : null) || DbStore.getUsers()[0];
+  
+  if (!user) {
+    return res.status(401).json({ success: false, message: 'Unauthenticated session.' });
+  }
+
   return res.json({ success: true, user });
 });
 
 router.post('/auth/register', (req: Request, res: Response) => {
-  const { name, email, password, companyName, role, phoneNumber } = req.body;
+  const { name, email, password, companyName, role, phoneNumber, department } = req.body;
   if (!name || !email || !companyName) {
     return res.status(400).json({ success: false, message: 'Name, email, and company name are required.' });
   }
@@ -72,7 +103,7 @@ router.post('/auth/register', (req: Request, res: Response) => {
     role: role || 'company_admin',
     companyId: company.id,
     companyName: company.name,
-    department: 'Corporate Administration',
+    department: department || '',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'
   });
 
@@ -155,7 +186,11 @@ router.post('/auth/reset-password', (req: Request, res: Response) => {
 });
 
 router.put('/auth/profile', (req: Request, res: Response) => {
-  const userId = req.headers['x-user-id'] as string || 'usr_admin';
+  const userId = extractUserId(req);
+  if (!userId) {
+    return res.status(401).json({ success: false, message: 'Unauthenticated session.' });
+  }
+
   const { name, department, avatar, phoneNumber } = req.body;
 
   const updated = DbStore.updateUser(userId, {
@@ -185,14 +220,21 @@ router.put('/auth/profile', (req: Request, res: Response) => {
 });
 
 router.post('/auth/change-password', (req: Request, res: Response) => {
-  const userId = req.headers['x-user-id'] as string || 'usr_admin';
+  const userId = extractUserId(req);
+  if (!userId) {
+    return res.status(401).json({ success: false, message: 'Unauthenticated session.' });
+  }
+
   const { currentPassword, newPassword } = req.body;
 
   if (!currentPassword || !newPassword) {
     return res.status(400).json({ success: false, message: 'Current password and new password are required.' });
   }
 
-  const user = DbStore.getUserById(userId) || DbStore.getUsers()[0];
+  const user = DbStore.getUserById(userId);
+  if (!user) {
+    return res.status(404).json({ success: false, message: 'User profile not found.' });
+  }
 
   DbStore.logAudit({
     userId: user.id,
@@ -476,10 +518,12 @@ router.post('/users/:id/reset-password', (req: Request, res: Response) => {
   const user = DbStore.getUserById(req.params.id);
   if (!user) return res.status(404).json({ success: false, message: 'User not found' });
   
+  const actor = getActorFromRequest(req);
+
   DbStore.logAudit({
-    userId: 'usr_admin',
-    userName: 'System Admin',
-    userRole: 'super_admin',
+    userId: actor.userId,
+    userName: actor.userName,
+    userRole: actor.userRole,
     companyId: user.companyId,
     action: 'RESET_PASSWORD',
     entityType: 'User',
@@ -668,11 +712,7 @@ router.post('/compliance-records', (req: Request, res: Response) => {
   const company = DbStore.getCompanyById(companyId);
   const user = DbStore.getUserById(assignedUserId) || DbStore.getUsers()[0];
 
-  const actor = {
-    userId: req.headers['x-user-id'] as string || 'usr_compliance',
-    userName: req.headers['x-user-name'] as string || 'Michael Vance',
-    userRole: req.headers['x-user-role'] as string || 'compliance_officer'
-  };
+  const actor = getActorFromRequest(req);
 
   const nowStr = new Date().toISOString();
 
@@ -705,11 +745,7 @@ router.post('/compliance-records', (req: Request, res: Response) => {
 });
 
 router.put('/compliance-records/:id', (req: Request, res: Response) => {
-  const actor = {
-    userId: req.headers['x-user-id'] as string || 'usr_compliance',
-    userName: req.headers['x-user-name'] as string || 'Michael Vance',
-    userRole: req.headers['x-user-role'] as string || 'compliance_officer'
-  };
+  const actor = getActorFromRequest(req);
 
   const payload = { ...req.body, updatedAt: new Date().toISOString() };
   if (payload.documentName || payload.title) {
@@ -730,11 +766,7 @@ router.post('/compliance-records/:id/attachment', (req: Request, res: Response) 
     return res.status(400).json({ success: false, message: 'Document URL is required for attachment.' });
   }
 
-  const actor = {
-    userId: req.headers['x-user-id'] as string || 'usr_compliance',
-    userName: req.headers['x-user-name'] as string || 'Michael Vance',
-    userRole: req.headers['x-user-role'] as string || 'compliance_officer'
-  };
+  const actor = getActorFromRequest(req);
 
   const updated = DbStore.updateRecord(
     req.params.id,
@@ -761,11 +793,7 @@ router.post('/compliance-records/:id/attachment', (req: Request, res: Response) 
 });
 
 router.delete('/compliance-records/:id/attachment', (req: Request, res: Response) => {
-  const actor = {
-    userId: req.headers['x-user-id'] as string || 'usr_compliance',
-    userName: req.headers['x-user-name'] as string || 'Michael Vance',
-    userRole: req.headers['x-user-role'] as string || 'compliance_officer'
-  };
+  const actor = getActorFromRequest(req);
 
   const updated = DbStore.updateRecord(
     req.params.id,
@@ -792,11 +820,7 @@ router.delete('/compliance-records/:id/attachment', (req: Request, res: Response
 });
 
 router.delete('/compliance-records/:id', (req: Request, res: Response) => {
-  const actor = {
-    userId: req.headers['x-user-id'] as string || 'usr_admin',
-    userName: req.headers['x-user-name'] as string || 'Sarah Jenkins',
-    userRole: req.headers['x-user-role'] as string || 'super_admin'
-  };
+  const actor = getActorFromRequest(req);
 
   const deleted = DbStore.deleteRecord(req.params.id, actor);
   if (!deleted) return res.status(404).json({ success: false, message: 'Compliance record not found' });
@@ -806,11 +830,7 @@ router.delete('/compliance-records/:id', (req: Request, res: Response) => {
 // Advance Renewal Stage
 router.post('/compliance-records/:id/advance-renewal', (req: Request, res: Response) => {
   const { step, notes } = req.body;
-  const actor = {
-    userId: req.headers['x-user-id'] as string || 'usr_compliance',
-    userName: req.headers['x-user-name'] as string || 'Michael Vance',
-    userRole: req.headers['x-user-role'] as string || 'compliance_officer'
-  };
+  const actor = getActorFromRequest(req);
 
   const updated = DbStore.advanceRenewalWorkflow(req.params.id, step, notes, actor);
   if (!updated) return res.status(404).json({ success: false, message: 'Record not found' });
@@ -1265,11 +1285,7 @@ router.delete('/renewals/:id/attachment', (req: Request, res: Response) => {
 });
 
 router.delete('/renewals/:id', (req: Request, res: Response) => {
-  const actor = {
-    userId: req.headers['x-user-id'] as string || 'usr_admin',
-    userName: req.headers['x-user-name'] as string || 'Sarah Jenkins',
-    userRole: req.headers['x-user-role'] as string || 'super_admin'
-  };
+  const actor = getActorFromRequest(req);
 
   const deleted = DbStore.deleteRenewal(req.params.id, actor);
   if (!deleted) return res.status(404).json({ success: false, message: 'Renewal request not found' });

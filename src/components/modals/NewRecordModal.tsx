@@ -116,42 +116,44 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title={editingRecord ? 'Edit Compliance Record' : 'Create New Compliance Record'}
-      subtitle="Register new regulatory license, permit, or certification document"
+      subtitle="Easily register and track official corporate licenses, registrations, and permits"
       maxWidth="3xl"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-            Compliance Title / License Name *
+            Document Title / License Name *
           </label>
           <input
             type="text"
             required
-            placeholder="e.g., ISO 27001 Certification, FDA Facility Permit"
+            placeholder="e.g. Trade License Renewal 2024-25"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 font-medium"
           />
+          <p className="text-[10px] text-slate-500 mt-0.5">Enter the name of the official document or license you want to track</p>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Document Code / Reference *
+              License or Reference Number *
             </label>
             <input
               type="text"
               required
-              placeholder="ISO-27001-2025"
+              placeholder="e.g. TL-2024-88392"
               value={formData.code}
               onChange={(e) => setFormData({ ...formData, code: e.target.value })}
               className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-mono text-slate-900 dark:text-slate-100"
             />
+            <p className="text-[10px] text-slate-500 mt-0.5">Official reference code or license number</p>
           </div>
 
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Entity Scope *
+              Select Company *
             </label>
             <select
               value={formData.companyId}
@@ -162,13 +164,14 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
+            <p className="text-[10px] text-slate-500 mt-0.5">Company owning this document</p>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Category
+              Document Category
             </label>
             <select
               value={formData.category}
@@ -183,11 +186,11 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
 
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Issuing Regulatory Authority
+              Issuing Authority
             </label>
             <input
               type="text"
-              placeholder="e.g. FDA, ISO BSI, EPA"
+              placeholder="e.g. City Corporation, NBR, RJSC, Fire Service"
               value={formData.issuingAuthority}
               onChange={(e) => setFormData({ ...formData, issuingAuthority: e.target.value })}
               className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100"
@@ -219,6 +222,7 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
               onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
               className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 font-bold"
             />
+            <p className="text-[10px] text-slate-500 mt-0.5">Automated alerts will trigger 30 days prior</p>
           </div>
 
           <div>
@@ -241,7 +245,7 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Estimated Renewal Fee ($ USD)
+              Estimated Renewal Fee (BDT)
             </label>
             <input
               type="number"
@@ -250,6 +254,7 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
               onChange={(e) => setFormData({ ...formData, estimatedCost: Number(e.target.value) })}
               className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 font-bold"
             />
+            <p className="text-[10px] text-slate-500 mt-0.5">Estimated renewal cost in BDT</p>
           </div>
 
           <div>
@@ -258,7 +263,7 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
             </label>
             <input
               type="text"
-              placeholder="Audit, Mandatory, FDA"
+              placeholder="Trade License, City Corp, Annual"
               value={formData.tagsStr}
               onChange={(e) => setFormData({ ...formData, tagsStr: e.target.value })}
               className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100"
@@ -268,11 +273,11 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
 
         <div>
           <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-            Audit Notes & Compliance Requirements
+            Notes & Filing Requirements
           </label>
           <textarea
-            rows={3}
-            placeholder="Key filing requirements, required audit attachments, and contact person..."
+            rows={2}
+            placeholder="Key filing requirements, required documents, or contacts..."
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
             className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100"
@@ -283,7 +288,7 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
           >
             Cancel
           </button>
@@ -292,7 +297,7 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
             disabled={isSubmitting}
             className="px-5 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition cursor-pointer"
           >
-            {isSubmitting ? 'Saving Record...' : editingRecord ? 'Update Record' : 'Save Record'}
+            {isSubmitting ? 'Saving...' : editingRecord ? 'Update Record' : 'Save Record'}
           </button>
         </div>
       </form>

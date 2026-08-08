@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { ShieldCheck, Lock, CheckCircle2 } from 'lucide-react';
 import Card from '../../../components/ui/Card';
 import ThemeToggle from '../../../components/layout/ThemeToggle';

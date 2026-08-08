@@ -5,15 +5,22 @@ import Homepage from './pages/public/Homepage';
 import LoginPage from './pages/public/Login';
 import RegisterPage from './pages/public/Register';
 import ForgotPasswordPage from './features/auth/pages/ForgotPasswordPage';
+import ResetPasswordPage from './features/auth/pages/ResetPasswordPage';
+import Workspace from './pages/Workspace';
 
 function MainAppContent() {
-  const { isAuthenticated, isLoading, logout } = useAuth();
-  const [authView, setAuthView] = useState<'homepage' | 'login' | 'register' | 'forgot'>('homepage');
+  const { isAuthenticated, isLoading } = useAuth();
+  const [authView, setAuthView] = useState<'homepage' | 'login' | 'register' | 'forgot' | 'reset'>('homepage');
+  const [resetToken, setResetToken] = useState<string | undefined>(undefined);
 
   const handleNavigateHome = () => setAuthView('homepage');
   const handleNavigateLogin = () => setAuthView('login');
   const handleNavigateRegister = () => setAuthView('register');
   const handleNavigateForgot = () => setAuthView('forgot');
+  const handleNavigateReset = (token?: string) => {
+    setResetToken(token);
+    setAuthView('reset');
+  };
 
   if (isLoading) {
     return (
@@ -56,12 +63,23 @@ function MainAppContent() {
       return (
         <ForgotPasswordPage
           onNavigateLogin={handleNavigateLogin}
-          onNavigateResetPassword={() => setAuthView('login')}
+          onNavigateResetPassword={(token) => handleNavigateReset(token)}
           onNavigateView={(view) => {
             if (view === 'login') handleNavigateLogin();
             else if (view === 'register') handleNavigateRegister();
             else if (view === 'forgot') handleNavigateForgot();
+            else if (view === 'reset') handleNavigateReset();
           }}
+        />
+      );
+    }
+
+    if (authView === 'reset') {
+      return (
+        <ResetPasswordPage
+          prefilledToken={resetToken}
+          onNavigateLogin={handleNavigateLogin}
+          onBackHome={handleNavigateHome}
         />
       );
     }
@@ -69,33 +87,7 @@ function MainAppContent() {
     return null;
   }
 
-  if (isAuthenticated) {
-    return (
-      <Homepage
-        onNavigateLogin={handleNavigateLogin}
-        onNavigateRegister={handleNavigateRegister}
-        onSignOut={logout}
-        isAuthenticated
-      />
-    );
-  }
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-900 font-sans">
-      <div className="max-w-2xl w-full px-6 py-12 text-center">
-        <h1 className="text-3xl font-bold text-slate-900 mb-4">You are logged in successfully.</h1>
-        <p className="text-slate-600 mb-6">
-          There is no dashboard page enabled after login. Your account is authenticated and ready.
-        </p>
-        <button
-          onClick={handleNavigateHome}
-          className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition"
-        >
-          Back to Homepage
-        </button>
-      </div>
-    </div>
-  );
+  return <Workspace />;
 }
 
 export default function App() {

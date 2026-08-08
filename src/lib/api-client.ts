@@ -10,12 +10,18 @@ export const apiClient: AxiosInstance = axios.create({
   timeout: 15000,
 });
 
-// Request Interceptor: Attach JWT Token & Tenant Header
+// Request Interceptor: Attach JWT Token, User ID & Tenant Header
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('complianceflow_token');
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
+      if (token.startsWith('mock_jwt_token_')) {
+        const userId = token.replace('mock_jwt_token_', '').trim();
+        if (userId) {
+          config.headers['X-User-ID'] = userId;
+        }
+      }
     }
 
     const tenantId = localStorage.getItem('complianceflow_tenant_id');

@@ -213,39 +213,39 @@ export const shadows = {
 } as const;
 
 export const buttonVariants = {
-  primary: 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white shadow-xs focus:ring-2 focus:ring-blue-500/50',
-  secondary: 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-slate-400/50',
-  outline: 'border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-blue-500/50',
-  ghost: 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-slate-400/50',
-  danger: 'bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white shadow-xs focus:ring-2 focus:ring-rose-500/50',
-  success: 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white shadow-xs focus:ring-2 focus:ring-emerald-500/50',
-  warning: 'bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white shadow-xs focus:ring-2 focus:ring-amber-500/50',
-  info: 'bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white shadow-xs focus:ring-2 focus:ring-sky-500/50',
+  primary: 'bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white dark:bg-slate-100 dark:hover:bg-white dark:text-slate-900 shadow-2xs border border-slate-900 dark:border-slate-100 transition-all font-medium rounded-lg',
+  secondary: 'bg-white hover:bg-slate-50 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-2xs transition-all font-medium rounded-lg',
+  outline: 'border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300 transition-all font-medium rounded-lg',
+  ghost: 'hover:bg-slate-100 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300 transition-all font-medium rounded-lg',
+  danger: 'bg-rose-700 hover:bg-rose-800 text-white shadow-2xs border border-rose-700 transition-all font-medium rounded-lg',
+  success: 'bg-emerald-700 hover:bg-emerald-800 text-white shadow-2xs border border-emerald-700 transition-all font-medium rounded-lg',
+  warning: 'bg-amber-700 hover:bg-amber-800 text-white shadow-2xs border border-amber-700 transition-all font-medium rounded-lg',
+  info: 'bg-slate-800 hover:bg-slate-700 text-white shadow-2xs border border-slate-800 transition-all font-medium rounded-lg',
 } as const;
 
 export const cardVariants = {
-  default: 'bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs rounded-xl',
-  elevated: 'bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 shadow-md hover:shadow-lg transition-shadow rounded-xl',
-  bordered: 'bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-xl',
-  interactive: 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-500 transition-all cursor-pointer rounded-xl',
-  flat: 'bg-slate-50 dark:bg-slate-800/60 border border-slate-200/50 dark:border-slate-700/50 rounded-xl',
-  glass: 'glass-panel border border-white/20 dark:border-slate-800/80 rounded-xl shadow-lg',
+  default: 'bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-2xs rounded-xl',
+  elevated: 'bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-xl',
+  bordered: 'bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl',
+  interactive: 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600 transition-all cursor-pointer rounded-xl',
+  flat: 'bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800 rounded-xl',
+  glass: 'bg-white/95 dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs',
 } as const;
 
 export const inputVariants = {
-  default: 'bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500',
-  filled: 'bg-slate-100 dark:bg-slate-800 border border-transparent text-slate-900 dark:text-slate-100 rounded-lg focus:bg-white dark:focus:bg-slate-900 focus:border-blue-500',
-  error: 'bg-white dark:bg-slate-900 border border-rose-500 text-slate-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-rose-500/50',
-  success: 'bg-white dark:bg-slate-900 border border-emerald-500 text-slate-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-emerald-500/50',
+  default: 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 rounded-lg focus:ring-1 focus:ring-slate-900 focus:border-slate-900 dark:focus:ring-slate-400 dark:focus:border-slate-400 shadow-2xs transition-all',
+  filled: 'bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200/50 dark:border-slate-700/50 text-slate-900 dark:text-slate-100 rounded-lg focus:bg-white dark:focus:bg-slate-900 focus:border-slate-900 dark:focus:border-slate-400 transition-all',
+  error: 'bg-white dark:bg-slate-900 border border-rose-500 text-slate-900 dark:text-slate-100 rounded-lg focus:ring-1 focus:ring-rose-500',
+  success: 'bg-white dark:bg-slate-900 border border-emerald-500 text-slate-900 dark:text-slate-100 rounded-lg focus:ring-1 focus:ring-emerald-500',
 } as const;
 
 export const badgeVariants = {
-  active: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800',
-  pending: 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-200 dark:border-amber-800',
-  expired: 'bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-200 dark:border-rose-800',
-  info: 'bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-200 dark:border-blue-800',
-  neutral: 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700',
-  outline: 'bg-transparent text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700',
+  active: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/80 font-medium rounded-md',
+  pending: 'bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/80 font-medium rounded-md',
+  expired: 'bg-rose-50 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/80 dark:border-rose-800/80 font-medium rounded-md',
+  info: 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-medium rounded-md',
+  neutral: 'bg-slate-50 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300 border border-slate-200 dark:border-slate-700/80 font-medium rounded-md',
+  outline: 'bg-transparent text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-medium rounded-md',
 } as const;
 
 export const themeTokens = {
