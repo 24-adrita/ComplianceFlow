@@ -16,7 +16,7 @@ function extractUserId(req: Request): string {
 
 function getActorFromRequest(req: Request) {
   const userId = extractUserId(req);
-  const user = (userId ? DbStore.getUserById(userId) : null) || DbStore.getUsers()[0];
+  const user = userId ? DbStore.getUserById(userId) : null;
   if (user) {
     return {
       userId: user.id,
@@ -25,9 +25,9 @@ function getActorFromRequest(req: Request) {
     };
   }
   return {
-    userId: 'usr_admin',
-    userName: 'Nusrat Jahan',
-    userRole: 'super_admin'
+    userId: 'usr_guest',
+    userName: 'Guest User',
+    userRole: 'user'
   };
 }
 
@@ -61,7 +61,7 @@ router.post('/auth/login', (req: Request, res: Response) => {
 
 router.get('/auth/me', (req: Request, res: Response) => {
   const userId = extractUserId(req);
-  const user = (userId ? DbStore.getUserById(userId) : null) || DbStore.getUsers()[0];
+  const user = userId ? DbStore.getUserById(userId) : null;
   
   if (!user) {
     return res.status(401).json({ success: false, message: 'Unauthenticated session.' });

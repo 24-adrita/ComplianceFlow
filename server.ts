@@ -29,10 +29,7 @@ async function findFreePort(startPort: number, maxPort: number) {
 
 async function startServer() {
   const app = express();
-  const basePort = Number(process.env.PORT) || 3000;
-  const hmrBasePort = Number(process.env.VITE_HMR_PORT) || 24678;
-  const PORT = await findFreePort(basePort, basePort + 10);
-  const HMR_PORT = await findFreePort(hmrBasePort, hmrBasePort + 10);
+  const PORT = Number(process.env.PORT) || 3000;
 
   app.use(express.json());
 
@@ -43,7 +40,7 @@ async function startServer() {
   // Vite development middleware or production static files
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
-      server: { middlewareMode: true, hmr: { port: HMR_PORT } },
+      server: { middlewareMode: true },
       appType: 'spa',
     });
     app.use(vite.middlewares);
@@ -55,14 +52,8 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '127.0.0.1', () => {
-    console.log(`ComplianceFlow Server listening on http://localhost:${PORT}`);
-    if (PORT !== basePort) {
-      console.log(`Requested port ${basePort} was busy; using ${PORT} instead.`);
-    }
-    if (HMR_PORT !== hmrBasePort) {
-      console.log(`Requested HMR port ${hmrBasePort} was busy; using ${HMR_PORT} instead.`);
-    }
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`ComplianceFlow Server running at http://localhost:${PORT}`);
   });
 }
 

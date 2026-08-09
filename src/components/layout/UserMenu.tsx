@@ -48,9 +48,10 @@ export const UserMenu: React.FC = () => {
     || getCompanyName(activeUser.companyId, activeUser.companyName)
     || 'Global Enterprise Systems Inc.';
 
-  const departmentName = activeUser.departmentId && typeof activeUser.departmentId === 'object' && activeUser.departmentId !== null
-    ? activeUser.departmentId.name
-    : 'Compliance & Governance';
+  const departmentName = (activeUser as any)?.department
+    || (activeUser.departmentId && typeof activeUser.departmentId === 'object' && activeUser.departmentId !== null
+        ? activeUser.departmentId.name
+        : 'Compliance & Governance');
 
   const userAvatarUrl = activeUser.avatarUrl || (activeUser as any).avatar;
 
@@ -67,17 +68,9 @@ export const UserMenu: React.FC = () => {
           aria-label={`User account menu for ${activeUser.name}`}
           className="flex items-center gap-2.5 p-1 sm:px-2 sm:py-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 group cursor-pointer"
         >
-          {userAvatarUrl ? (
-            <img
-              src={userAvatarUrl}
-              alt={activeUser.name}
-              className="w-8 h-8 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shadow-2xs shrink-0"
-            />
-          ) : (
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-black text-xs shadow-2xs shrink-0 ring-2 ring-blue-500/20 group-hover:ring-blue-500/40 transition-all">
-              {activeUser.name.charAt(0).toUpperCase()}
-            </div>
-          )}
+          <div className="w-8 h-8 rounded-lg bg-slate-900 dark:bg-slate-800 text-white flex items-center justify-center font-bold text-xs shadow-2xs shrink-0 ring-2 ring-slate-500/20 group-hover:ring-slate-500/40 transition-all border border-slate-700/60">
+            <UserIcon className="w-4 h-4 text-slate-200" aria-hidden="true" />
+          </div>
           
           <div className="hidden lg:block text-left">
             <p className="text-xs font-bold text-slate-900 dark:text-slate-100 leading-tight">
@@ -123,17 +116,9 @@ export const UserMenu: React.FC = () => {
                 {/* User Info Header */}
                 <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-800/30">
                   <div className="flex items-center gap-3">
-                    {userAvatarUrl ? (
-                      <img
-                        src={userAvatarUrl}
-                        alt={activeUser.name}
-                        className="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shadow-2xs shrink-0"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-black text-sm shadow-2xs shrink-0">
-                        {activeUser.name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
+                    <div className="w-10 h-10 rounded-xl bg-slate-900 dark:bg-slate-800 text-white flex items-center justify-center shadow-2xs shrink-0 border border-slate-700/60">
+                      <UserIcon className="w-5 h-5 text-slate-200" aria-hidden="true" />
+                    </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-extrabold text-slate-900 dark:text-slate-100 truncate">
                         {activeUser.name}

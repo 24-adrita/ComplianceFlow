@@ -34,6 +34,7 @@ export const connectDB = async (
   retries = MAX_RETRIES,
   delay = RETRY_INTERVAL_MS
 ): Promise<typeof mongoose> => {
+  mongoose.set('bufferCommands', false);
   attachConnectionEventListeners();
 
   const options: ConnectOptions = {

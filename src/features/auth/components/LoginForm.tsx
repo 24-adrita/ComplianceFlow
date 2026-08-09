@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Mail, Lock, AlertCircle, ArrowRight, ShieldAlert } from 'lucide-react';
+import { Mail, Lock, AlertCircle, ArrowRight } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import { useAuth } from '../../../context/AuthContext';
@@ -63,14 +63,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       setErrorMessage(msg);
       toast.error(msg);
     }
-  };
-
-  // Helper for quick demo login fill
-  const handleQuickFill = (email: string, pass: string) => {
-    setValue('email', email, { shouldValidate: true });
-    setValue('password', pass, { shouldValidate: true });
-    setErrorMessage(null);
-    toast.success(`Prefilled test credentials for ${email}`);
   };
 
   return (
@@ -147,34 +139,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           {isSubmitting ? 'Authenticating...' : 'Sign In to Workspace'}
         </Button>
       </form>
-
-      {/* Demo Credentials Drawer */}
-      <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-2">
-        <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-500">
-          <span className="flex items-center gap-1.5">
-            <ShieldAlert className="w-3.5 h-3.5 text-blue-500" />
-            Quick Demo Login Accounts
-          </span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-          <button
-            type="button"
-            onClick={() => handleQuickFill('admin@compliance.com.bd', 'Admin123!')}
-            className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-slate-400 text-left transition-colors flex flex-col"
-          >
-            <span className="font-semibold text-slate-800 dark:text-slate-200">Super Admin (Nusrat)</span>
-            <span className="text-[10px] text-slate-400 truncate">admin@compliance.com.bd</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleQuickFill('tanvir.ahmed@dhakatech.com.bd', 'Officer123!')}
-            className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-slate-400 text-left transition-colors flex flex-col"
-          >
-            <span className="font-semibold text-slate-800 dark:text-slate-200">Compliance Officer (Tanvir)</span>
-            <span className="text-[10px] text-slate-400 truncate">tanvir.ahmed@dhakatech.com.bd</span>
-          </button>
-        </div>
-      </div>
 
       {/* Navigation to Register */}
       {onNavigateRegister && (

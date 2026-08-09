@@ -157,7 +157,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onNavigateLogin, onS
           <div>
             <Input
               label="Phone Number (Optional)"
-              placeholder="+1 (555) 019-2834"
+              placeholder="+880 1712-345678"
               themeVariant="light"
               leftIcon={<Phone className="w-4 h-4 text-slate-400" />}
               error={errors.phoneNumber?.message}
