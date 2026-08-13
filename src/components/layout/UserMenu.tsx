@@ -48,9 +48,16 @@ export const UserMenu: React.FC = () => {
     || getCompanyName(activeUser.companyId, activeUser.companyName)
     || 'Global Enterprise Systems Inc.';
 
+<<<<<<< HEAD
   const departmentName = activeUser.departmentId && typeof activeUser.departmentId === 'object' && activeUser.departmentId !== null
     ? activeUser.departmentId.name
     : 'Compliance & Governance';
+=======
+  const departmentName = (activeUser as any)?.department
+    || (activeUser.departmentId && typeof activeUser.departmentId === 'object' && activeUser.departmentId !== null
+        ? activeUser.departmentId.name
+        : 'Compliance & Governance');
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
 
   const userAvatarUrl = activeUser.avatarUrl || (activeUser as any).avatar;
 
@@ -67,6 +74,7 @@ export const UserMenu: React.FC = () => {
           aria-label={`User account menu for ${activeUser.name}`}
           className="flex items-center gap-2.5 p-1 sm:px-2 sm:py-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 group cursor-pointer"
         >
+<<<<<<< HEAD
           {userAvatarUrl ? (
             <img
               src={userAvatarUrl}
@@ -78,6 +86,11 @@ export const UserMenu: React.FC = () => {
               {activeUser.name.charAt(0).toUpperCase()}
             </div>
           )}
+=======
+          <div className="w-8 h-8 rounded-lg bg-slate-900 dark:bg-slate-800 text-white flex items-center justify-center font-bold text-xs shadow-2xs shrink-0 ring-2 ring-slate-500/20 group-hover:ring-slate-500/40 transition-all border border-slate-700/60">
+            <UserIcon className="w-4 h-4 text-slate-200" aria-hidden="true" />
+          </div>
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
           
           <div className="hidden lg:block text-left">
             <p className="text-xs font-bold text-slate-900 dark:text-slate-100 leading-tight">
@@ -123,6 +136,7 @@ export const UserMenu: React.FC = () => {
                 {/* User Info Header */}
                 <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-800/30">
                   <div className="flex items-center gap-3">
+<<<<<<< HEAD
                     {userAvatarUrl ? (
                       <img
                         src={userAvatarUrl}
@@ -134,6 +148,11 @@ export const UserMenu: React.FC = () => {
                         {activeUser.name.charAt(0).toUpperCase()}
                       </div>
                     )}
+=======
+                    <div className="w-10 h-10 rounded-xl bg-slate-900 dark:bg-slate-800 text-white flex items-center justify-center shadow-2xs shrink-0 border border-slate-700/60">
+                      <UserIcon className="w-5 h-5 text-slate-200" aria-hidden="true" />
+                    </div>
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-extrabold text-slate-900 dark:text-slate-100 truncate">
                         {activeUser.name}

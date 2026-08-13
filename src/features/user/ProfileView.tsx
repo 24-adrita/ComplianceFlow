@@ -62,8 +62,13 @@ export const ProfileView: React.FC = () => {
       {/* Top Header Card */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-6 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
+<<<<<<< HEAD
           <div className="w-14 h-14 rounded-2xl bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0 shadow-2xs">
             <User className="w-7 h-7 text-slate-700 dark:text-slate-200" />
+=======
+          <div className="w-14 h-14 rounded-xl bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border border-slate-800 dark:border-slate-200 flex items-center justify-center shrink-0 shadow-2xs">
+            <User className="w-7 h-7 text-slate-200 dark:text-slate-800" />
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
           </div>
           <div>
             <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -72,8 +77,13 @@ export const ProfileView: React.FC = () => {
                 {formattedRole}
               </span>
             </h1>
+<<<<<<< HEAD
             <p className="text-xs text-slate-600 dark:text-slate-400 font-mono mt-0.5">{activeUser.email}</p>
             <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Tenant Subsidiary: <span className="font-semibold text-slate-800 dark:text-slate-200">{activeUser.companyName || 'Corporate Workspace'}</span></p>
+=======
+            <p className="text-xs text-slate-500 font-mono mt-0.5">{activeUser.email}</p>
+            <p className="text-xs text-slate-500 mt-1">Tenant Subsidiary: <span className="font-medium text-slate-700 dark:text-slate-300">{activeUser.companyName || 'Corporate Workspace'}</span></p>
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
           </div>
         </div>
 
@@ -139,6 +149,15 @@ export const ProfileView: React.FC = () => {
                 </span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+<<<<<<< HEAD
+=======
+                <span className="text-slate-500 font-medium">Phone Number</span>
+                <span className="font-mono text-slate-800 dark:text-slate-200">
+                  {activeUser.phone || (activeUser as any)?.phoneNumber || '+880 1712-345678'}
+                </span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
                 <span className="text-slate-500 font-medium">Organization</span>
                 <span className="font-semibold text-slate-800 dark:text-slate-200">{activeUser.companyName || 'Not specified'}</span>
               </div>
@@ -167,6 +186,7 @@ export const ProfileView: React.FC = () => {
                 </p>
               </div>
               <div className="pt-2">
+<<<<<<< HEAD
                 <Button
                   variant="secondary"
                   fullWidth
@@ -175,6 +195,14 @@ export const ProfileView: React.FC = () => {
                 >
                   Change Account Password
                 </Button>
+=======
+                <button
+                  onClick={() => setActiveTab('security')}
+                  className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2"
+                >
+                  <KeyRound className="w-4 h-4 text-amber-500" /> Change Account Password
+                </button>
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
               </div>
             </div>
           </div>
@@ -208,7 +236,11 @@ export const ProfileView: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 label="Phone Number"
+<<<<<<< HEAD
                 placeholder="+1 (555) 019-2834"
+=======
+                placeholder="+880 1712-345678"
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
                 leftIcon={<Phone className="w-4 h-4 text-slate-400" />}
                 {...register('phoneNumber')}
               />
@@ -221,6 +253,7 @@ export const ProfileView: React.FC = () => {
             </div>
 
             <div className="pt-2 flex justify-end gap-3">
+<<<<<<< HEAD
               <Button
                 type="button"
                 variant="secondary"
@@ -228,6 +261,15 @@ export const ProfileView: React.FC = () => {
               >
                 Cancel
               </Button>
+=======
+              <button
+                type="button"
+                onClick={() => setActiveTab('details')}
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              >
+                Cancel
+              </button>
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
               <Button
                 type="submit"
                 variant="primary"

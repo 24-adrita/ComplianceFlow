@@ -78,6 +78,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onNavigateLogin, onS
     try {
       setErrorMessage(null);
       
+<<<<<<< HEAD
       // Format Bangladesh phone number
       let formattedPhone = data.phoneNumber ? data.phoneNumber.trim() : undefined;
       if (formattedPhone) {
@@ -92,13 +93,20 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onNavigateLogin, onS
         }
       }
 
+=======
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
       // Submit registration payload
       const payload = {
         name: data.name,
         email: data.email,
         password: data.password,
+<<<<<<< HEAD
         role: 'ADMIN',
         phoneNumber: formattedPhone,
+=======
+        role: 'COMPANY_ADMIN',
+        phoneNumber: data.phoneNumber || undefined,
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
         companyName: data.companyName,
         companyCode: data.companyCode || undefined,
       };
@@ -119,12 +127,21 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onNavigateLogin, onS
   };
 
   return (
+<<<<<<< HEAD
     <div className="space-y-5">
       {errorMessage && (
         <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-300 text-xs flex items-start gap-2.5">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
           <div className="flex-1">
             <p className="font-medium text-rose-800 dark:text-rose-200">Registration error</p>
+=======
+    <div className="space-y-6">
+      {errorMessage && (
+        <div className="p-3.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs flex items-start gap-2.5 animate-fadeIn">
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
+          <div className="flex-1">
+            <p className="font-semibold">Registration Issue</p>
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
             <p className="mt-0.5">{errorMessage}</p>
           </div>
         </div>
@@ -136,7 +153,12 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onNavigateLogin, onS
           <div>
             <Input
               label="Full Name"
+<<<<<<< HEAD
               placeholder="Jane Doe"
+=======
+              placeholder="Sarah Jenkins"
+              themeVariant="light"
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
               leftIcon={<User className="w-4 h-4 text-slate-400" />}
               error={errors.name?.message}
               {...register('name')}
@@ -146,7 +168,12 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onNavigateLogin, onS
             <Input
               label="Work Email"
               type="email"
+<<<<<<< HEAD
               placeholder="jane@company.com"
+=======
+              placeholder="sarah@acme.com"
+              themeVariant="light"
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
               leftIcon={<Mail className="w-4 h-4 text-slate-400" />}
               error={errors.email?.message}
               {...register('email')}
@@ -159,13 +186,19 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onNavigateLogin, onS
           <div>
             <Input
               label="Company Name"
+<<<<<<< HEAD
               placeholder="Acme Enterprises"
+=======
+              placeholder="Acme Global Corporation"
+              themeVariant="light"
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
               leftIcon={<Building2 className="w-4 h-4 text-slate-400" />}
               error={errors.companyName?.message}
               {...register('companyName')}
             />
           </div>
           <div>
+<<<<<<< HEAD
             <div className="w-full space-y-1.5">
               <label className="block text-xs font-bold tracking-tight text-slate-900 dark:text-slate-100">
                 Phone Number (Bangladesh)
@@ -191,6 +224,16 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onNavigateLogin, onS
                 </p>
               )}
             </div>
+=======
+            <Input
+              label="Phone Number (Optional)"
+              placeholder="+880 1712-345678"
+              themeVariant="light"
+              leftIcon={<Phone className="w-4 h-4 text-slate-400" />}
+              error={errors.phoneNumber?.message}
+              {...register('phoneNumber')}
+            />
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
           </div>
         </div>
 
@@ -201,6 +244,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onNavigateLogin, onS
               label="Password"
               type="password"
               placeholder="••••••••"
+<<<<<<< HEAD
+=======
+              themeVariant="light"
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
               leftIcon={<Lock className="w-4 h-4 text-slate-400" />}
               error={errors.password?.message}
               showPasswordToggle
@@ -211,6 +258,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onNavigateLogin, onS
               label="Confirm Password"
               type="password"
               placeholder="••••••••"
+<<<<<<< HEAD
+=======
+              themeVariant="light"
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
               leftIcon={<Lock className="w-4 h-4 text-slate-400" />}
               error={errors.confirmPassword?.message}
               showPasswordToggle
@@ -223,6 +274,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onNavigateLogin, onS
         </div>
 
         {/* Terms and Conditions Checkbox */}
+<<<<<<< HEAD
         <div className="pt-1">
           <label className="flex items-start gap-2.5 select-none cursor-pointer text-xs text-slate-600 dark:text-slate-400">
             <input
@@ -232,6 +284,17 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onNavigateLogin, onS
             />
             <span>
               I agree to the <span className="font-medium text-blue-600 dark:text-blue-400">Terms of Service</span> and <span className="font-medium text-blue-600 dark:text-blue-400">Privacy Policy</span>.
+=======
+        <div className="pt-2">
+          <label className="flex items-start gap-2.5 select-none cursor-pointer text-xs text-slate-600 dark:text-slate-400">
+            <input
+              type="checkbox"
+              className="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800"
+              {...register('agreeTerms')}
+            />
+            <span>
+              I agree to the <span className="font-semibold text-blue-600 dark:text-blue-400">Terms of Service</span>, <span className="font-semibold text-blue-600 dark:text-blue-400">Privacy Policy</span>, and multi-tenant data compliance guidelines.
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
             </span>
           </label>
           {errors.agreeTerms && (
@@ -246,14 +309,21 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onNavigateLogin, onS
           fullWidth
           isLoading={isSubmitting}
           rightIcon={!isSubmitting ? <ArrowRight className="w-4 h-4" /> : undefined}
+<<<<<<< HEAD
           className="mt-2 py-2.5"
         >
           {isSubmitting ? 'Creating workspace...' : 'Create Company Workspace'}
+=======
+          className="mt-2"
+        >
+          {isSubmitting ? 'Registering Organization...' : 'Create Company Workspace'}
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
         </Button>
       </form>
 
       {/* Already registered link */}
       {onNavigateLogin && (
+<<<<<<< HEAD
         <div className="text-center text-xs text-slate-500 dark:text-slate-400 pt-1">
           Already have an account?{' '}
           <button
@@ -261,6 +331,15 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onNavigateLogin, onS
             className="text-blue-600 dark:text-blue-400 font-semibold hover:underline cursor-pointer"
           >
             Sign in
+=======
+        <div className="text-center text-xs text-slate-500 dark:text-slate-400">
+          Already have an account?{' '}
+          <button
+            onClick={onNavigateLogin}
+            className="text-blue-600 dark:text-blue-400 font-bold hover:underline"
+          >
+            Sign in here
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
           </button>
         </div>
       )}

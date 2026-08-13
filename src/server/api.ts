@@ -1,5 +1,9 @@
 import { Router, Request, Response } from 'express';
+<<<<<<< HEAD
 import { DbStore } from './db.js';
+=======
+import { DbStore } from './db';
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
 
 const router = Router();
 
@@ -16,7 +20,11 @@ function extractUserId(req: Request): string {
 
 function getActorFromRequest(req: Request) {
   const userId = extractUserId(req);
+<<<<<<< HEAD
   const user = (userId ? DbStore.getUserById(userId) : null) || DbStore.getUsers()[0];
+=======
+  const user = userId ? DbStore.getUserById(userId) : null;
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
   if (user) {
     return {
       userId: user.id,
@@ -25,9 +33,15 @@ function getActorFromRequest(req: Request) {
     };
   }
   return {
+<<<<<<< HEAD
     userId: 'usr_admin',
     userName: 'Adrita Chakraborty',
     userRole: 'super_admin'
+=======
+    userId: 'usr_guest',
+    userName: 'Guest User',
+    userRole: 'user'
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
   };
 }
 
@@ -61,7 +75,11 @@ router.post('/auth/login', (req: Request, res: Response) => {
 
 router.get('/auth/me', (req: Request, res: Response) => {
   const userId = extractUserId(req);
+<<<<<<< HEAD
   const user = (userId ? DbStore.getUserById(userId) : null) || DbStore.getUsers()[0];
+=======
+  const user = userId ? DbStore.getUserById(userId) : null;
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
   
   if (!user) {
     return res.status(401).json({ success: false, message: 'Unauthenticated session.' });
@@ -261,6 +279,7 @@ router.get('/dashboard/metrics', (req: Request, res: Response) => {
   return res.json({ success: true, metrics });
 });
 
+<<<<<<< HEAD
 router.get('/dashboard/overview', (req: Request, res: Response) => {
   const companyId = req.query.companyId as string;
   const overviewData = DbStore.getDashboardOverview(companyId);
@@ -285,6 +304,8 @@ router.get('/dashboard/charts', (req: Request, res: Response) => {
   });
 });
 
+=======
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
 // =====================================
 // 3. COMPANY MANAGEMENT
 // =====================================

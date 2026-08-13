@@ -8,6 +8,7 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export const Card = memo(React.forwardRef<HTMLDivElement, CardProps>(
   ({ children, variant = 'default', animated = true, className = '', ...props }, ref) => {
+<<<<<<< HEAD
     const baseStyles = 'rounded-xl transition-all duration-200';
     const variants = {
       default:
@@ -16,6 +17,16 @@ export const Card = memo(React.forwardRef<HTMLDivElement, CardProps>(
         'bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600',
       glass:
         'bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800 shadow-2xs',
+=======
+    const baseStyles = 'rounded-2xl transition-all duration-200';
+    const variants = {
+      default:
+        'bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700/80',
+      bordered:
+        'bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-blue-500/50 dark:hover:border-blue-500/50',
+      glass:
+        'bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-white/20 dark:border-slate-800/80 shadow-xs hover:shadow-lg',
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
     };
 
     if (animated) {

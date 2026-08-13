@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
   Company,
   User,
@@ -9,6 +10,9 @@ import {
   DashboardChartsData
 } from '../types';
 import apiClient from '../lib/api-client';
+=======
+import { Company, User, ComplianceRecord, AuditLog, NotificationItem, DashboardMetrics } from '../types';
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
 
 const API_BASE = '/api';
 
@@ -30,13 +34,18 @@ export const ApiService = {
     return res.json();
   },
 
+<<<<<<< HEAD
   // Dashboard Metrics & Analytics
+=======
+  // Dashboard Metrics
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
   getDashboardMetrics: async (companyId?: string): Promise<{ success: boolean; metrics: DashboardMetrics }> => {
     const query = companyId && companyId !== 'all' ? `?companyId=${companyId}` : '';
     const res = await fetch(`${API_BASE}/dashboard/metrics${query}`);
     return res.json();
   },
 
+<<<<<<< HEAD
   getDashboardOverview: async (companyId?: string, departmentId?: string): Promise<{ success: boolean; data: DashboardOverviewData; message?: string }> => {
     const params = new URLSearchParams();
     if (companyId && companyId !== 'all') params.append('companyId', companyId);
@@ -55,6 +64,8 @@ export const ApiService = {
     return apiClient.get(`/dashboard/charts${queryString}`);
   },
 
+=======
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
   // Companies
   getCompanies: async (): Promise<{ success: boolean; companies: Company[] }> => {
     const res = await fetch(`${API_BASE}/companies`);
@@ -169,6 +180,7 @@ export const ApiService = {
     return res.json();
   },
 
+<<<<<<< HEAD
   verifyQRCode: async (qrCodeId: string): Promise<{ success: boolean; record?: ComplianceRecord; message?: string }> => {
     try {
       const res = await fetch(`${API_BASE}/v1/verify/${encodeURIComponent(qrCodeId)}`);
@@ -190,6 +202,8 @@ export const ApiService = {
     }
   },
 
+=======
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
   // Global Search
   globalSearch: async (params: { query: string; category?: string; companyId?: string }) => {
     const qParams = new URLSearchParams();

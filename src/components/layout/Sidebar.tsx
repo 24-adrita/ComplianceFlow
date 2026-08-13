@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+<<<<<<< HEAD
+=======
+import { useAuth } from '../../context/AuthContext';
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
 import {
   LayoutDashboard,
   FileCheck2,
@@ -78,6 +82,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onToggleCollapse,
   warningCount = 0,
   unreadCount = 0,
+<<<<<<< HEAD
   user = {
     name: 'Alexander Wright',
     email: 'a.wright@complianceflow.io',
@@ -85,6 +90,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     avatar: undefined,
   },
 }) => {
+=======
+  user: userProp,
+}) => {
+  const { user: authUser, currentUser } = useAuth();
+  const activeUser = userProp || authUser || currentUser;
+
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
   // Track open nested sections
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     main: true,
@@ -101,6 +113,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const sections: NavSection[] = [
     {
+<<<<<<< HEAD
       title: 'Core Platform',
       id: 'main',
       items: [
@@ -163,6 +176,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       ],
     },
     {
+=======
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
       title: 'Account & Security',
       id: 'account',
       items: [
@@ -256,7 +271,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <span>Search records...</span>
             </span>
             <kbd className="px-1.5 py-0.5 text-[9px] font-mono bg-slate-900 border border-slate-700 text-slate-300 rounded shadow-2xs">
+<<<<<<< HEAD
               Ctrl + K
+=======
+              ⌘K
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
             </kbd>
           </button>
         </div>
@@ -371,12 +390,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
         >
           {/* Avatar with Status Badge */}
           <div className="relative shrink-0">
+<<<<<<< HEAD
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-slate-700 to-slate-800 border border-slate-600/60 flex items-center justify-center font-bold text-white text-xs shadow-inner">
               {user.avatar ? (
                 <img src={user.avatar} alt={user.name} className="w-full h-full rounded-xl object-cover" />
               ) : (
                 user.name?.charAt(0) || 'A'
               )}
+=======
+            <div className="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700/80 flex items-center justify-center font-bold text-white text-xs shadow-inner">
+              <User className="w-4 h-4 text-slate-200" />
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
             </div>
             <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-slate-900" />
           </div>
@@ -385,6 +409,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {!isCollapsed && (
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between gap-1">
+<<<<<<< HEAD
                 <h4 className="text-xs font-bold text-white truncate">{user.name}</h4>
                 <span className="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 uppercase shrink-0">
                   {user.role || 'Admin'}
@@ -405,6 +430,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span className="font-mono text-slate-400">SOC-2</span>
           </div>
         )}
+=======
+                <h4 className="text-xs font-bold text-white truncate">{activeUser?.name || 'User'}</h4>
+                <span className="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 uppercase shrink-0">
+                  {activeUser?.role ? activeUser.role.replace('_', ' ') : 'User'}
+                </span>
+              </div>
+              <p className="text-[10px] text-slate-400 truncate">{activeUser?.email || ''}</p>
+            </div>
+          )}
+        </div>
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
       </div>
     </motion.aside>
   );

@@ -66,6 +66,7 @@ export const ChangePasswordView: React.FC = () => {
   };
 
   return (
+<<<<<<< HEAD
     <div className="max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-2xs space-y-6">
       {/* Header Info */}
       <div className="flex items-start justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
@@ -89,16 +90,46 @@ export const ChangePasswordView: React.FC = () => {
           <div className="flex-1">
             <p className="font-bold">Password Update Warning</p>
             <p className="mt-0.5 text-rose-700 dark:text-rose-300">{errorMessage}</p>
+=======
+    <div className="max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-6">
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+        <div>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Lock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            Change Password
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Update your corporate account password to maintain SOC-2 & ISO security readiness.
+          </p>
+        </div>
+      </div>
+
+      {errorMessage && (
+        <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs flex items-start gap-2.5">
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
+          <div className="flex-1">
+            <p className="font-semibold">Security Validation Error</p>
+            <p className="mt-0.5">{errorMessage}</p>
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
           </div>
         </div>
       )}
 
+<<<<<<< HEAD
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+=======
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
         <div>
           <Input
             label="Current Password"
             type="password"
+<<<<<<< HEAD
             placeholder="Enter your current password"
+=======
+            placeholder="••••••••"
+            themeVariant="light"
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
             leftIcon={<Lock className="w-4 h-4 text-slate-400" />}
             error={errors.currentPassword?.message}
             showPasswordToggle
@@ -110,7 +141,12 @@ export const ChangePasswordView: React.FC = () => {
           <Input
             label="New Password"
             type="password"
+<<<<<<< HEAD
             placeholder="Minimum 8 characters"
+=======
+            placeholder="••••••••"
+            themeVariant="light"
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
             leftIcon={<Lock className="w-4 h-4 text-slate-400" />}
             error={errors.newPassword?.message}
             showPasswordToggle
@@ -120,7 +156,12 @@ export const ChangePasswordView: React.FC = () => {
           <Input
             label="Confirm New Password"
             type="password"
+<<<<<<< HEAD
             placeholder="Re-enter new password"
+=======
+            placeholder="••••••••"
+            themeVariant="light"
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
             leftIcon={<Lock className="w-4 h-4 text-slate-400" />}
             error={errors.confirmPassword?.message}
             showPasswordToggle
@@ -128,10 +169,15 @@ export const ChangePasswordView: React.FC = () => {
           />
         </div>
 
+<<<<<<< HEAD
         {/* Password Strength Indicator */}
         <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 space-y-2">
           <PasswordStrengthIndicator password={newPasswordValue} />
         </div>
+=======
+        {/* Password Strength Meter */}
+        <PasswordStrengthIndicator password={newPasswordValue} />
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
 
         <div className="pt-2 flex justify-end">
           <Button

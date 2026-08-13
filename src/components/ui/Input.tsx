@@ -79,7 +79,11 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         <div className="relative flex items-center group">
           {/* Left Icon */}
           {leftIcon && (
+<<<<<<< HEAD
             <span className="absolute left-3 text-slate-500 dark:text-slate-400 pointer-events-none group-focus-within:text-slate-700 dark:group-focus-within:text-slate-300 transition-colors" aria-hidden="true">
+=======
+            <span className="absolute left-3 text-slate-500 dark:text-slate-400 pointer-events-none group-focus-within:text-blue-500 transition-colors" aria-hidden="true">
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
               {leftIcon}
             </span>
           )}
@@ -102,6 +106,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 ? `${inputId}-helper`
                 : undefined
             }
+<<<<<<< HEAD
             className={`w-full rounded-lg text-xs sm:text-sm bg-white border text-slate-900 ${
               themeVariant === 'light'
                 ? 'placeholder-slate-400 border-slate-300'
@@ -115,6 +120,21 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             } ${leftIcon ? 'pl-9' : 'pl-3.5'} ${
               shouldShowPasswordToggle || rightIcon || clearable ? 'pr-10' : 'pr-3.5'
             } py-2 ${floatingLabel ? 'pt-5 pb-1.5' : ''} ${className}`}
+=======
+            className={`w-full rounded-xl text-xs sm:text-sm bg-white border text-black ${
+              themeVariant === 'light'
+                ? 'placeholder-slate-500'
+                : 'dark:bg-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400'
+            } shadow-2xs transition-all duration-150 focus:outline-none focus-visible:ring-2 disabled:bg-slate-50 dark:disabled:bg-slate-800 disabled:text-slate-400 disabled:cursor-not-allowed ${
+              errorMessage
+                ? 'border-rose-500/80 focus:border-rose-500 focus-visible:ring-rose-500/30 bg-rose-50'
+                : successMessage
+                ? 'border-emerald-500/80 focus:border-emerald-500 focus-visible:ring-emerald-500/30'
+                : 'border-slate-300 focus:border-slate-600 focus-visible:ring-slate-300'
+            } ${leftIcon ? 'pl-9' : 'pl-3.5'} ${
+              shouldShowPasswordToggle || rightIcon || clearable ? 'pr-10' : 'pr-3.5'
+            } py-2.5 ${floatingLabel ? 'pt-5 pb-1.5' : ''} ${className}`}
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
             {...props}
           />
 
@@ -156,7 +176,11 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 title={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? (
+<<<<<<< HEAD
                   <EyeOff className="w-4 h-4 text-slate-700 dark:text-slate-300" aria-hidden="true" />
+=======
+                  <EyeOff className="w-4 h-4 text-blue-500" aria-hidden="true" />
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
                 ) : (
                   <Eye className="w-4 h-4" aria-hidden="true" />
                 )}

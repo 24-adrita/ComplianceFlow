@@ -2,9 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { ComplianceRecord, ComplianceCategory, RiskLevel, Company, User } from '../../types';
 import { Modal } from '../common/Modal';
 import { ApiService } from '../../services/api';
+<<<<<<< HEAD
 import { Button } from '../ui/Button';
 import { UploadCloud, FileText, CheckCircle2, Trash2, Paperclip } from 'lucide-react';
 import toast from 'react-hot-toast';
+=======
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
 
 interface NewRecordModalProps {
   isOpen: boolean;
@@ -47,6 +50,7 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
     estimatedCost: 5000,
     assignedUserId: currentUser?.id || 'usr_compliance',
     notes: '',
+<<<<<<< HEAD
     tagsStr: 'Compliance, Permit',
     documentUrl: ''
   });
@@ -54,6 +58,12 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState<string>('');
+=======
+    tagsStr: 'Compliance, Permit'
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
 
   useEffect(() => {
     if (editingRecord) {
@@ -70,6 +80,7 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
         estimatedCost: editingRecord.estimatedCost,
         assignedUserId: editingRecord.assignedUserId,
         notes: editingRecord.notes || '',
+<<<<<<< HEAD
         tagsStr: (editingRecord.tags || []).join(', '),
         documentUrl: editingRecord.documentUrl || ''
       });
@@ -78,6 +89,10 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
       } else {
         setUploadedFileName('');
       }
+=======
+        tagsStr: (editingRecord.tags || []).join(', ')
+      });
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
     } else {
       setFormData({
         title: '',
@@ -92,6 +107,7 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
         estimatedCost: 5000,
         assignedUserId: currentUser?.id || 'usr_compliance',
         notes: '',
+<<<<<<< HEAD
         tagsStr: 'Compliance, Permit',
         documentUrl: ''
       });
@@ -120,6 +136,13 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
     }
   };
 
+=======
+        tagsStr: 'Compliance, Permit'
+      });
+    }
+  }, [editingRecord, isOpen, companies, currentUser]);
+
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser || !formData.title || !formData.code || !formData.expiryDate) return;
@@ -319,6 +342,7 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
           />
         </div>
 
+<<<<<<< HEAD
         {/* Cloudinary Dropzone Proxy */}
         <div>
           <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
@@ -389,6 +413,23 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
           >
             {editingRecord ? 'Update Record' : 'Save Record'}
           </Button>
+=======
+        <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="px-5 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition cursor-pointer"
+          >
+            {isSubmitting ? 'Saving...' : editingRecord ? 'Update Record' : 'Save Record'}
+          </button>
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
         </div>
       </form>
     </Modal>

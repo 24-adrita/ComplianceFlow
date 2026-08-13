@@ -178,7 +178,11 @@ export default function Homepage({
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+<<<<<<< HEAD
                 <span>Real-time renewal tracking</span>
+=======
+                <span>Dedicated audit trail reporting</span>
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
               </div>
             </div>
           </div>

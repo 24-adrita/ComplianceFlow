@@ -64,7 +64,11 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
           <div className="flex items-center gap-1 shrink-0">
             <kbd className="hidden md:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono font-semibold bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 shadow-2xs">
+<<<<<<< HEAD
               Ctrl + K
+=======
+              <Command className="w-2.5 h-2.5" aria-hidden="true" /> K
+>>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
             </kbd>
           </div>
         </motion.button>
