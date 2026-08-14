@@ -2,12 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { ComplianceRecord, ComplianceCategory, RiskLevel, Company, User } from '../../types';
 import { Modal } from '../common/Modal';
 import { ApiService } from '../../services/api';
-<<<<<<< HEAD
 import { Button } from '../ui/Button';
-import { UploadCloud, FileText, CheckCircle2, Trash2, Paperclip } from 'lucide-react';
+import { UploadCloud, CheckCircle2, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-=======
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
 
 interface NewRecordModalProps {
   isOpen: boolean;
@@ -50,7 +47,6 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
     estimatedCost: 5000,
     assignedUserId: currentUser?.id || 'usr_compliance',
     notes: '',
-<<<<<<< HEAD
     tagsStr: 'Compliance, Permit',
     documentUrl: ''
   });
@@ -58,12 +54,6 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState<string>('');
-=======
-    tagsStr: 'Compliance, Permit'
-  });
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
 
   useEffect(() => {
     if (editingRecord) {
@@ -80,7 +70,6 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
         estimatedCost: editingRecord.estimatedCost,
         assignedUserId: editingRecord.assignedUserId,
         notes: editingRecord.notes || '',
-<<<<<<< HEAD
         tagsStr: (editingRecord.tags || []).join(', '),
         documentUrl: editingRecord.documentUrl || ''
       });
@@ -89,10 +78,6 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
       } else {
         setUploadedFileName('');
       }
-=======
-        tagsStr: (editingRecord.tags || []).join(', ')
-      });
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
     } else {
       setFormData({
         title: '',
@@ -107,7 +92,6 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
         estimatedCost: 5000,
         assignedUserId: currentUser?.id || 'usr_compliance',
         notes: '',
-<<<<<<< HEAD
         tagsStr: 'Compliance, Permit',
         documentUrl: ''
       });
@@ -119,51 +103,58 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
     if (!file) return;
     setIsUploading(true);
     setUploadedFileName(file.name);
-
-    // Simulate Cloudinary Proxy Upload
     setTimeout(() => {
-      const simulatedCloudinaryUrl = `https://res.cloudinary.com/compliance-flow/image/upload/v1723450000/documents/${encodeURIComponent(file.name)}`;
-      setFormData((prev) => ({ ...prev, documentUrl: simulatedCloudinaryUrl }));
+      setFormData((prev) => ({
+        ...prev,
+        documentUrl: `https://res.cloudinary.com/demo/image/upload/v12345678/${file.name}`
+      }));
       setIsUploading(false);
-      toast.success(`Uploaded ${file.name} to Cloudinary document proxy`);
-    }, 1200);
+      toast.success(`Attached ${file.name}`);
+    }, 1000);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFileUpload(e.dataTransfer.files[0]);
     }
   };
 
-=======
-        tagsStr: 'Compliance, Permit'
-      });
-    }
-  }, [editingRecord, isOpen, companies, currentUser]);
-
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentUser || !formData.title || !formData.code || !formData.expiryDate) return;
-
     setIsSubmitting(true);
     try {
+      const tags = formData.tagsStr.split(',').map(t => t.trim()).filter(Boolean);
       const payload = {
-        ...formData,
-        tags: formData.tagsStr.split(',').map((t) => t.trim()).filter(Boolean)
+        title: formData.title,
+        code: formData.code,
+        companyId: formData.companyId,
+        category: formData.category,
+        issuingAuthority: formData.issuingAuthority,
+        issueDate: formData.issueDate,
+        expiryDate: formData.expiryDate,
+        renewalFrequencyDays: Number(formData.renewalFrequencyDays),
+        riskLevel: formData.riskLevel,
+        estimatedCost: Number(formData.estimatedCost),
+        assignedUserId: formData.assignedUserId,
+        notes: formData.notes,
+        tags,
+        documentUrl: formData.documentUrl
       };
 
-      if (editingRecord) {
-        await ApiService.updateComplianceRecord(editingRecord.id, payload, currentUser);
-      } else {
-        await ApiService.createComplianceRecord(payload, currentUser);
-      }
+      const defaultUser = currentUser || ({ id: 'usr_admin', name: 'Admin', role: 'ADMIN', email: 'admin@compliance.com', companyId: 'comp_01', companyName: 'Acme', department: 'Compliance', status: 'ACTIVE' } as unknown as User);
 
+      if (editingRecord) {
+        await ApiService.updateComplianceRecord(editingRecord.id, payload, defaultUser);
+        toast.success('Compliance record updated');
+      } else {
+        await ApiService.createComplianceRecord(payload, defaultUser);
+        toast.success('New compliance record created');
+      }
       onSuccess();
       onClose();
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save record');
     } finally {
       setIsSubmitting(false);
     }
@@ -173,45 +164,44 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={editingRecord ? 'Edit Compliance Record' : 'Create New Compliance Record'}
-      subtitle="Easily register and track official corporate licenses, registrations, and permits"
-      maxWidth="3xl"
+      title={editingRecord ? 'Edit Compliance Record' : 'Create Compliance Record'}
+      subtitle="Register permit details, expiration dates, and renewal requirements."
+      maxWidth="2xl"
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-            Document Title / License Name *
-          </label>
-          <input
-            type="text"
-            required
-            placeholder="e.g. Trade License Renewal 2024-25"
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 font-medium"
-          />
-          <p className="text-[10px] text-slate-500 mt-0.5">Enter the name of the official document or license you want to track</p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
+      <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              License or Reference Number *
+              Title / License Name *
             </label>
             <input
               type="text"
               required
-              placeholder="e.g. TL-2024-88392"
-              value={formData.code}
-              onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-              className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-mono text-slate-900 dark:text-slate-100"
+              placeholder="e.g. Trade License Renewal 2026"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100"
             />
-            <p className="text-[10px] text-slate-500 mt-0.5">Official reference code or license number</p>
           </div>
 
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Select Company *
+              Record Code / Reference *
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.code}
+              onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+              className="w-full px-3 py-2 text-xs font-mono bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              Tenant Company *
             </label>
             <select
               value={formData.companyId}
@@ -222,14 +212,11 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
-            <p className="text-[10px] text-slate-500 mt-0.5">Company owning this document</p>
           </div>
-        </div>
 
-        <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Document Category
+              Category *
             </label>
             <select
               value={formData.category}
@@ -244,11 +231,12 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
 
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Issuing Authority
+              Issuing Authority *
             </label>
             <input
               type="text"
-              placeholder="e.g. City Corporation, NBR, RJSC, Fire Service"
+              required
+              placeholder="e.g. Dhaka City Corp / NBR"
               value={formData.issuingAuthority}
               onChange={(e) => setFormData({ ...formData, issuingAuthority: e.target.value })}
               className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100"
@@ -256,7 +244,7 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
               Issue Date
@@ -278,19 +266,18 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
               required
               value={formData.expiryDate}
               onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
-              className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 font-bold"
+              className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100"
             />
-            <p className="text-[10px] text-slate-500 mt-0.5">Automated alerts will trigger 30 days prior</p>
           </div>
 
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Risk Level Rating
+              Risk Level *
             </label>
             <select
               value={formData.riskLevel}
               onChange={(e) => setFormData({ ...formData, riskLevel: e.target.value as RiskLevel })}
-              className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 font-semibold"
+              className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100"
             >
               <option value="low">Low Risk</option>
               <option value="medium">Medium Risk</option>
@@ -300,19 +287,17 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Estimated Renewal Fee (BDT)
+              Estimated Renewal Cost (BDT)
             </label>
             <input
               type="number"
-              placeholder="5000"
               value={formData.estimatedCost}
               onChange={(e) => setFormData({ ...formData, estimatedCost: Number(e.target.value) })}
-              className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 font-bold"
+              className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100"
             />
-            <p className="text-[10px] text-slate-500 mt-0.5">Estimated renewal cost in BDT</p>
           </div>
 
           <div>
@@ -342,7 +327,6 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
           />
         </div>
 
-<<<<<<< HEAD
         {/* Cloudinary Dropzone Proxy */}
         <div>
           <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
@@ -413,23 +397,6 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
           >
             {editingRecord ? 'Update Record' : 'Save Record'}
           </Button>
-=======
-        <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="px-5 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition cursor-pointer"
-          >
-            {isSubmitting ? 'Saving...' : editingRecord ? 'Update Record' : 'Save Record'}
-          </button>
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
         </div>
       </form>
     </Modal>

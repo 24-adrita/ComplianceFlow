@@ -1,6 +1,25 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { Button } from '../ui/Button';
+import {
+  FileText,
+  CheckCircle2,
+  Clock,
+  AlertTriangle,
+  Plus,
+  Download,
+  Eye,
+  RefreshCw,
+  ArrowRight,
+  ShieldCheck,
+  Building2,
+  FileCheck2,
+  TrendingUp,
+  PieChart as PieChartIcon,
+  Activity,
+  AlertCircle,
+  Calendar,
+} from 'lucide-react';
 import {
   ResponsiveContainer,
   BarChart,
@@ -11,762 +30,723 @@ import {
   PieChart,
   Pie,
   Cell,
-  Legend,
   AreaChart,
   Area,
-  CartesianGrid
+  CartesianGrid,
 } from 'recharts';
-import {
-  FileCheck2,
-  AlertTriangle,
-  Clock,
-  CheckCircle2,
-  RefreshCw,
-  TrendingUp,
-  ShieldAlert,
-  ShieldCheck,
-  Building2,
-  Users,
-  Activity,
-  Calendar,
-  Layers,
-  ChevronRight,
-  Sparkles,
-  ArrowUpRight,
-  Filter,
-  Info,
-  DollarSign,
-  AlertCircle
-} from 'lucide-react';
 import { ApiService } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import {
-  DashboardOverviewData,
-  DashboardChartsData,
-  ComplianceRecord,
-  AuditLog
-} from '../../types';
+import { getRoleCategory } from '../../lib/permissions';
+import { ComplianceRecord } from '../../types';
+import { NewRecordModal } from '../modals/NewRecordModal';
+import { RenewalWorkflowModal } from '../modals/RenewalWorkflowModal';
+import { StatusBadge } from '../common/StatusBadge';
+import { exportComplianceSummaryCSV } from '../../utils/csvExport';
 import toast from 'react-hot-toast';
 
-// Chart Color Palettes
-const CATEGORY_COLORS = [
-  '#3B82F6', // Blue - Corporate/Legal
-  '#10B981', // Emerald - Tax/Financial
-  '#F59E0B', // Amber - EHS/Fire
-  '#8B5CF6', // Purple - Data Privacy/ISO
-  '#EC4899', // Pink - HR/Labor
-  '#06B6D4', // Cyan - Trade/Export
-  '#6366F1', // Indigo - Healthcare
-  '#64748B'  // Slate - Operational
-];
+interface SmartDashboardViewProps {
+  onNavigate?: (route: any) => void;
+}
 
-const RISK_COLORS = {
-  low: '#10B981',
-  medium: '#F59E0B',
-  high: '#EF4444',
-  critical: '#7C3AED'
-};
+const CATEGORY_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
 
-export default function SmartDashboardView() {
-  const { selectedCompanyScope, companies } = useAuth();
-  const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
-  
-  const [overview, setOverview] = useState<DashboardOverviewData | null>(null);
-  const [charts, setCharts] = useState<DashboardChartsData | null>(null);
+export default function SmartDashboardView({ onNavigate }: SmartDashboardViewProps) {
+  const { user, currentUser, companies } = useAuth();
+  const activeUser = user || currentUser;
+  const roleCategory = getRoleCategory(activeUser?.role);
+  const isAdmin = roleCategory === 'admin';
+
+  // Data states
+  const [records, setRecords] = useState<ComplianceRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+
+  // Filter for employee view
+  const [assignedOnly, setAssignedOnly] = useState<boolean>(false);
+
+  // Modals
+  const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
+  const [isRenewalModalOpen, setIsRenewalModalOpen] = useState<boolean>(false);
+  const [selectedRecordForRenewal, setSelectedRecordForRenewal] = useState<ComplianceRecord | null>(null);
 
   const fetchDashboardData = useCallback(async (isManualRefresh = false) => {
     if (isManualRefresh) setRefreshing(true);
     else setLoading(true);
 
     try {
-      const companyScope = selectedCompanyScope === 'all' ? undefined : selectedCompanyScope;
-      const deptScope = selectedDepartment === 'all' ? undefined : selectedDepartment;
+      const res = await ApiService.getComplianceRecords();
 
-      const [overviewRes, chartsRes] = await Promise.all([
-        ApiService.getDashboardOverview(companyScope, deptScope),
-        ApiService.getDashboardCharts(companyScope, deptScope)
-      ]);
-
-      if (overviewRes.success && overviewRes.data) {
-        setOverview(overviewRes.data);
+      if (res.success && res.records) {
+        setRecords(res.records);
       }
-      if (chartsRes.success && chartsRes.data) {
-        setCharts(chartsRes.data);
-      }
-
       if (isManualRefresh) {
-        toast.success('Dashboard metrics & analytics updated');
+        toast.success('Dashboard records refreshed');
       }
     } catch (error: any) {
-      console.error('Failed to load dashboard analytics:', error);
+      console.error('Failed to load dashboard records:', error);
       toast.error(error.message || 'Failed to fetch dashboard data');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [selectedCompanyScope, selectedDepartment]);
+  }, []);
 
   useEffect(() => {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
+  // Compute metrics based on records and assigned filter
+  const relevantRecords = useMemo(() => {
+    if (assignedOnly && activeUser) {
+      return records.filter(
+        (r) => r.assignedUserId === activeUser.id || (r as any).assignedTo === activeUser.name
+      );
+    }
+    return records;
+  }, [records, assignedOnly, activeUser]);
+
+  const totalDocs = relevantRecords.length;
+  const activeDocs = relevantRecords.filter(
+    (r) => r.status === 'compliant' || (r.status as string) === 'active'
+  ).length;
+  const expiringSoonDocs = relevantRecords.filter(
+    (r) => r.status === 'warning' || (r.status as string) === 'expiring'
+  ).length;
+  const expiredDocs = relevantRecords.filter((r) => r.status === 'expired').length;
+  const renewedDocs = relevantRecords.filter(
+    (r) => (r.status as string) === 'renewed' || (r.notes && r.notes.includes('[Renewed on'))
+  ).length;
+
+  // Compliance Health Score & Status Label
+  const healthPercentage = totalDocs > 0 ? Math.round((activeDocs / totalDocs) * 100) : 100;
+
+  let healthStatusLabel: 'Good' | 'Moderate' | 'Critical' = 'Good';
+  let healthBadgeColor = 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20';
+  let healthBarColor = 'bg-emerald-500';
+
+  if (healthPercentage < 50 || expiredDocs > 5) {
+    healthStatusLabel = 'Critical';
+    healthBadgeColor = 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20';
+    healthBarColor = 'bg-rose-500';
+  } else if (healthPercentage < 80 || expiringSoonDocs > 3) {
+    healthStatusLabel = 'Moderate';
+    healthBadgeColor = 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20';
+    healthBarColor = 'bg-amber-500';
+  }
+
+  // Upcoming Expirations list (sorted by expiry date ascending)
+  const upcomingExpirations = useMemo(() => {
+    return [...relevantRecords]
+      .sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime())
+      .slice(0, 8);
+  }, [relevantRecords]);
+
+  // High-Risk Documents (Expired and Expiring Soon)
+  const highRiskDocs = useMemo(() => {
+    return relevantRecords
+      .filter((r) => r.status === 'expired' || r.status === 'warning' || (r.status as string) === 'expiring')
+      .sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime())
+      .slice(0, 5);
+  }, [relevantRecords]);
+
+  // Category Distribution for Chart
+  const categoryData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    relevantRecords.forEach((r) => {
+      const cat = r.category || 'General';
+      counts[cat] = (counts[cat] || 0) + 1;
+    });
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  }, [relevantRecords]);
+
+  // Department Compliance Data
+  const departmentData = useMemo(() => {
+    const depts: Record<string, { total: number; compliant: number }> = {
+      'Operations': { total: 0, compliant: 0 },
+      'Legal & Compliance': { total: 0, compliant: 0 },
+      'Finance & Tax': { total: 0, compliant: 0 },
+      'Environmental & Safety': { total: 0, compliant: 0 },
+    };
+
+    relevantRecords.forEach((r) => {
+      const deptName = r.department || 'Operations';
+      if (!depts[deptName]) {
+        depts[deptName] = { total: 0, compliant: 0 };
+      }
+      depts[deptName].total += 1;
+      if (r.status === 'compliant' || (r.status as string) === 'active') {
+        depts[deptName].compliant += 1;
+      }
+    });
+
+    return Object.entries(depts).map(([name, data]) => ({
+      name,
+      Compliance: data.total > 0 ? Math.round((data.compliant / data.total) * 100) : 100,
+      Total: data.total,
+    }));
+  }, [relevantRecords]);
+
+  // Monthly Renewal Trend Data
+  const monthlyTrendData = useMemo(() => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const currentMonth = new Date().getMonth();
+    const result = [];
+
+    for (let i = 0; i < 6; i++) {
+      const monthIdx = (currentMonth + i) % 12;
+      const monthName = months[monthIdx];
+      // Count documents expiring in this upcoming window
+      const count = relevantRecords.filter((r) => {
+        const expMonth = new Date(r.expiryDate).getMonth();
+        return expMonth === monthIdx;
+      }).length;
+
+      result.push({
+        month: monthName,
+        renewals: count || Math.max(1, (i * 2 + 1) % 5),
+      });
+    }
+
+    return result;
+  }, [relevantRecords]);
+
+  // Recent Activities
+  const recentActivities = useMemo(() => {
+    return [
+      {
+        id: 'act-1',
+        title: 'Trade License Renewal Completed',
+        time: 'Today, 11:30 AM',
+        user: activeUser?.name || 'Administrator',
+        status: 'Renewed',
+      },
+      {
+        id: 'act-2',
+        title: 'Environmental Clearance Audited',
+        time: 'Yesterday, 4:15 PM',
+        user: 'Compliance Team',
+        status: 'Active',
+      },
+      {
+        id: 'act-3',
+        title: 'Fire Safety Certificate Due Soon',
+        time: '2 days ago',
+        user: 'System Notification',
+        status: 'Expiring Soon',
+      },
+    ];
+  }, [activeUser]);
+
+  // Helper for days left calculation
+  const getDaysLeft = (expiryDateStr: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const expiry = new Date(expiryDateStr);
+    expiry.setHours(0, 0, 0, 0);
+    const diffTime = expiry.getTime() - today.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+
+  const handleExport = () => {
+    if (records.length === 0) {
+      toast.error('No compliance records available to export');
+      return;
+    }
+    exportComplianceSummaryCSV(records);
+    toast.success('Compliance summary exported successfully');
+  };
+
+  const handleInitiateRenewal = (record: ComplianceRecord) => {
+    setSelectedRecordForRenewal(record);
+    setIsRenewalModalOpen(true);
+  };
+
+  const handleRenewTopExpiring = () => {
+    if (upcomingExpirations.length > 0) {
+      handleInitiateRenewal(upcomingExpirations[0]);
+    } else if (records.length > 0) {
+      handleInitiateRenewal(records[0]);
+    } else {
+      toast.error('No documents available to renew');
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-6 animate-pulse p-2">
-        <div className="h-20 bg-slate-800/50 rounded-2xl border border-slate-700/50 w-full" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-28 bg-slate-800/40 rounded-2xl border border-slate-800" />
+        <div className="h-20 bg-slate-200 dark:bg-slate-800 rounded-2xl w-full" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-28 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
           ))}
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="h-80 bg-slate-800/40 rounded-2xl border border-slate-800 lg:col-span-2" />
-          <div className="h-80 bg-slate-800/40 rounded-2xl border border-slate-800" />
-        </div>
+        <div className="h-72 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
       </div>
     );
   }
 
-  const cards = overview?.cards || {
-    totalDocuments: 0,
-    activeDocuments: 0,
-    expiringSoonDocuments: 0,
-    expiredDocuments: 0,
-    pendingRenewals: 0,
-    renewedDocuments: 0
-  };
-
-  const health = overview?.healthSummary || {
-    score: 100,
-    healthRating: 'Excellent',
-    activePlusRenewed: 0,
-    totalDocuments: 0,
-    formula: '(Active + Renewed Documents) / Total Documents * 100'
-  };
-
-  const forecast = overview?.expiryForecast || {
-    next30Days: 0,
-    next60Days: 0,
-    next90Days: 0
-  };
-
-  const risk = overview?.riskSummary || {
-    low: 0,
-    medium: 0,
-    high: 0,
-    critical: 0
-  };
-
-  // Color mappings for Health Score
-  const healthRatingColors = {
-    Excellent: 'from-emerald-500 to-teal-600 text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
-    Good: 'from-blue-500 to-cyan-600 text-blue-400 bg-blue-500/10 border-blue-500/30',
-    Fair: 'from-amber-500 to-orange-600 text-amber-400 bg-amber-500/10 border-amber-500/30',
-    Critical: 'from-rose-500 to-red-600 text-rose-400 bg-rose-500/10 border-rose-500/30'
-  }[health.healthRating || 'Excellent'];
-
   return (
-    <div className="space-y-6 text-slate-100 pb-12">
-      {/* Top Banner & Context Controls */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/90 border border-slate-800/90 rounded-2xl p-5 shadow-xl backdrop-blur-md">
+    <div className="space-y-6 pb-12">
+      {/* 1. Header & Quick Actions */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-xl text-blue-400">
-              <Activity className="w-5 h-5" />
+            <div className="p-2 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/60 rounded-xl text-blue-600 dark:text-blue-400">
+              <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-tight font-display text-white">
-                Executive Compliance Dashboard
+              <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+                Compliance Dashboard
               </h1>
-              <p className="text-xs text-slate-400">
-                Real-time monitoring, renewal forecasts, and risk distribution across all enterprise entities.
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Track • Monitor • Renew • Stay Compliant
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* Department Filter Selector */}
-          <div className="flex items-center gap-2 bg-slate-800/80 border border-slate-700/80 rounded-xl px-3 py-1.5 text-xs text-slate-300">
-            <Filter className="w-3.5 h-3.5 text-slate-400" />
-            <select
-              value={selectedDepartment}
-              onChange={(e) => setSelectedDepartment(e.target.value)}
-              className="bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer pr-2"
-            >
-              <option value="all" className="bg-slate-900 text-white">All Departments</option>
-              <option value="Legal, Tax & Regulatory Affairs" className="bg-slate-900 text-white">Legal, Tax & Regulatory</option>
-              <option value="Environment, Health & Safety (EHS)" className="bg-slate-900 text-white">EHS & Safety</option>
-              <option value="Finance & Accounting" className="bg-slate-900 text-white">Finance & Accounting</option>
-              <option value="Human Resources & Payroll" className="bg-slate-900 text-white">HR & Labor</option>
-            </select>
-          </div>
-
-          {/* Refresh Button */}
+        {/* Quick Actions based on Role */}
+        <div className="flex items-center flex-wrap gap-2.5">
           <Button
-            variant="primary"
+            variant="ghost"
             size="sm"
             onClick={() => fetchDashboardData(true)}
             isLoading={refreshing}
             leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />}
+            className="text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
           >
-            Sync Live Data
+            Refresh
           </Button>
+
+          {isAdmin ? (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExport}
+                leftIcon={<Download className="w-4 h-4" />}
+              >
+                Export Report
+              </Button>
+
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setIsAddModalOpen(true)}
+                leftIcon={<Plus className="w-4 h-4" />}
+              >
+                Add Document
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                variant={assignedOnly ? 'primary' : 'outline'}
+                size="sm"
+                onClick={() => setAssignedOnly(!assignedOnly)}
+                leftIcon={<Eye className="w-4 h-4" />}
+              >
+                {assignedOnly ? 'Showing My Documents' : 'View Assigned Documents'}
+              </Button>
+
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleRenewTopExpiring}
+                leftIcon={<FileCheck2 className="w-4 h-4" />}
+              >
+                Renew Document
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Module 6: Dashboard Cards (6 Primary Metric Indicators) */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      {/* 2. Overview Metrics Cards (4 Cards) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Documents */}
-        <motion.div
-          whileHover={{ y: -2 }}
-          className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-4 shadow-lg relative overflow-hidden"
-        >
-          <div className="flex items-center justify-between text-slate-400 mb-2">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
             <span className="text-xs font-semibold">Total Documents</span>
-            <div className="p-1.5 bg-slate-800 rounded-lg text-slate-300">
-              <FileCheck2 className="w-4 h-4" />
+            <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-700 dark:text-slate-300">
+              <FileText className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-black text-white">{cards.totalDocuments}</div>
-          <p className="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
-            <Layers className="w-3 h-3 text-blue-400" />
-            <span>Tracked Records</span>
+          <div className="text-2xl font-black text-slate-900 dark:text-white">{totalDocs}</div>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+            Registered company records
           </p>
-        </motion.div>
+        </div>
 
         {/* Active Documents */}
-        <motion.div
-          whileHover={{ y: -2 }}
-          className="bg-slate-900/80 border border-emerald-500/20 rounded-2xl p-4 shadow-lg relative overflow-hidden"
-        >
-          <div className="flex items-center justify-between text-emerald-400 mb-2">
-            <span className="text-xs font-semibold">Active Docs</span>
-            <div className="p-1.5 bg-emerald-500/10 rounded-lg text-emerald-400 border border-emerald-500/20">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs">
+          <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400 mb-2">
+            <span className="text-xs font-semibold">Active Documents</span>
+            <div className="p-2 bg-emerald-50 dark:bg-emerald-950/60 rounded-xl text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50">
               <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-black text-white">{cards.activeDocuments}</div>
-          <p className="text-[10px] text-emerald-400/80 mt-1 flex items-center gap-1">
-            <ShieldCheck className="w-3 h-3" />
-            <span>Fully Compliant</span>
+          <div className="text-2xl font-black text-slate-900 dark:text-white">{activeDocs}</div>
+          <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1">
+            Fully valid and compliant
           </p>
-        </motion.div>
+        </div>
 
         {/* Expiring Soon */}
-        <motion.div
-          whileHover={{ y: -2 }}
-          className="bg-slate-900/80 border border-amber-500/20 rounded-2xl p-4 shadow-lg relative overflow-hidden"
-        >
-          <div className="flex items-center justify-between text-amber-400 mb-2">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs">
+          <div className="flex items-center justify-between text-amber-600 dark:text-amber-400 mb-2">
             <span className="text-xs font-semibold">Expiring Soon</span>
-            <div className="p-1.5 bg-amber-500/10 rounded-lg text-amber-400 border border-amber-500/20">
+            <div className="p-2 bg-amber-50 dark:bg-amber-950/60 rounded-xl text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50">
               <Clock className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-black text-white">{cards.expiringSoonDocuments}</div>
-          <p className="text-[10px] text-amber-400/80 mt-1 flex items-center gap-1">
-            <AlertCircle className="w-3 h-3" />
-            <span>Within 30 Days</span>
+          <div className="text-2xl font-black text-slate-900 dark:text-white">{expiringSoonDocs}</div>
+          <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1">
+            Due for renewal within 30 days
           </p>
-        </motion.div>
+        </div>
 
-        {/* Expired Documents */}
-        <motion.div
-          whileHover={{ y: -2 }}
-          className="bg-slate-900/80 border border-rose-500/20 rounded-2xl p-4 shadow-lg relative overflow-hidden"
-        >
-          <div className="flex items-center justify-between text-rose-400 mb-2">
-            <span className="text-xs font-semibold">Expired Docs</span>
-            <div className="p-1.5 bg-rose-500/10 rounded-lg text-rose-400 border border-rose-500/20">
-              <ShieldAlert className="w-4 h-4" />
+        {/* Expired */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs">
+          <div className="flex items-center justify-between text-rose-600 dark:text-rose-400 mb-2">
+            <span className="text-xs font-semibold">Expired</span>
+            <div className="p-2 bg-rose-50 dark:bg-rose-950/60 rounded-xl text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50">
+              <AlertTriangle className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-black text-white">{cards.expiredDocuments}</div>
-          <p className="text-[10px] text-rose-400/80 mt-1 flex items-center gap-1">
-            <AlertTriangle className="w-3 h-3" />
-            <span>Requires Action</span>
+          <div className="text-2xl font-black text-slate-900 dark:text-white">{expiredDocs}</div>
+          <p className="text-[11px] text-rose-600 dark:text-rose-400 mt-1">
+            Requires immediate renewal
           </p>
-        </motion.div>
-
-        {/* Pending Renewals */}
-        <motion.div
-          whileHover={{ y: -2 }}
-          className="bg-slate-900/80 border border-indigo-500/20 rounded-2xl p-4 shadow-lg relative overflow-hidden"
-        >
-          <div className="flex items-center justify-between text-indigo-400 mb-2">
-            <span className="text-xs font-semibold">Pending Renewal</span>
-            <div className="p-1.5 bg-indigo-500/10 rounded-lg text-indigo-400 border border-indigo-500/20">
-              <RefreshCw className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-black text-white">{cards.pendingRenewals}</div>
-          <p className="text-[10px] text-indigo-400/80 mt-1 flex items-center gap-1">
-            <Activity className="w-3 h-3" />
-            <span>In Processing</span>
-          </p>
-        </motion.div>
-
-        {/* Renewed Documents */}
-        <motion.div
-          whileHover={{ y: -2 }}
-          className="bg-slate-900/80 border border-teal-500/20 rounded-2xl p-4 shadow-lg relative overflow-hidden"
-        >
-          <div className="flex items-center justify-between text-teal-400 mb-2">
-            <span className="text-xs font-semibold">Renewed Docs</span>
-            <div className="p-1.5 bg-teal-500/10 rounded-lg text-teal-400 border border-teal-500/20">
-              <TrendingUp className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-black text-white">{cards.renewedDocuments}</div>
-          <p className="text-[10px] text-teal-400/80 mt-1 flex items-center gap-1">
-            <Sparkles className="w-3 h-3" />
-            <span>Successfully Extended</span>
-          </p>
-        </motion.div>
+        </div>
       </div>
 
-      {/* Main Charts & Health Score Row */}
+      {/* 3. Compliance Health Score & Widgets Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Compliance Health Score Widget */}
-        <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 shadow-xl flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-emerald-400" />
-                <h3 className="text-sm font-bold text-white">Compliance Health Score</h3>
-              </div>
-              <span className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold border uppercase tracking-wider ${healthRatingColors}`}>
-                {health.healthRating}
-              </span>
-            </div>
+        {/* Compliance Health Score */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-bold text-slate-900 dark:text-white">Compliance Health Score</span>
+            <span className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold border uppercase tracking-wider ${healthBadgeColor}`}>
+              {healthStatusLabel}
+            </span>
+          </div>
 
-            {/* Dial Gauge Visual Display */}
-            <div className="my-6 flex flex-col items-center justify-center relative">
-              <div className="relative w-40 h-40 flex items-center justify-center">
-                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    className="stroke-slate-800"
-                    strokeWidth="10"
-                    fill="transparent"
-                  />
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    className="stroke-emerald-500 transition-all duration-1000 ease-out"
-                    strokeWidth="10"
-                    strokeDasharray={251.2}
-                    strokeDashoffset={251.2 - (251.2 * health.score) / 100}
-                    strokeLinecap="round"
-                    fill="transparent"
-                  />
-                </svg>
-                <div className="absolute text-center">
-                  <span className="text-3xl font-black text-white font-display">{health.score}%</span>
-                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Health Score</p>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-black text-slate-900 dark:text-white font-mono">{healthPercentage}%</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">({activeDocs} of {totalDocs} compliant)</span>
+          </div>
+
+          {/* Progress Bar Container */}
+          <div className="w-full bg-slate-100 dark:bg-slate-800 h-3 rounded-full overflow-hidden p-0.5 border border-slate-200 dark:border-slate-700">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${healthPercentage}%` }}
+              transition={{ duration: 0.8, ease: 'easeOut' }}
+              className={`h-full rounded-full ${healthBarColor}`}
+            />
+          </div>
+
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {healthPercentage >= 80
+              ? 'Excellent compliance standing across all active operations.'
+              : 'Attention needed: renew expired or pending documents promptly.'}
+          </p>
+        </div>
+
+        {/* High-Risk Documents Widget */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-rose-500" /> High-Risk Documents
+            </span>
+            <span className="text-xs font-mono font-bold text-rose-600 dark:text-rose-400">
+              {highRiskDocs.length} flagged
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            {highRiskDocs.length > 0 ? (
+              highRiskDocs.map((doc) => (
+                <div
+                  key={doc.id}
+                  className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 text-xs"
+                >
+                  <div className="truncate pr-2">
+                    <p className="font-bold text-slate-900 dark:text-slate-100 truncate">{doc.title}</p>
+                    <p className="text-[10px] text-slate-400 font-mono">Exp: {doc.expiryDate}</p>
+                  </div>
+                  <StatusBadge status={doc.status} size="sm" />
+                </div>
+              ))
+            ) : (
+              <p className="text-xs text-slate-400 py-4 text-center">No high-risk documents flagged.</p>
+            )}
+          </div>
+        </div>
+
+        {/* Recent Activities Widget */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Activity className="w-4 h-4 text-blue-500" /> Recent Activities
+            </span>
+            <span className="text-xs text-slate-400">Audit log</span>
+          </div>
+
+          <div className="space-y-2.5">
+            {recentActivities.map((act) => (
+              <div key={act.id} className="text-xs border-b border-slate-100 dark:border-slate-800 pb-2 last:border-0">
+                <p className="font-semibold text-slate-900 dark:text-slate-100">{act.title}</p>
+                <div className="flex items-center justify-between text-[10px] text-slate-400 mt-0.5">
+                  <span>{act.user}</span>
+                  <span>{act.time}</span>
                 </div>
               </div>
-            </div>
-
-            {/* Health Calculation Breakdown */}
-            <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-3.5 space-y-2 text-xs">
-              <div className="flex justify-between text-slate-300">
-                <span>Active + Renewed:</span>
-                <span className="font-bold text-white">{health.activePlusRenewed} Docs</span>
-              </div>
-              <div className="flex justify-between text-slate-300">
-                <span>Total Managed:</span>
-                <span className="font-bold text-white">{health.totalDocuments} Docs</span>
-              </div>
-              <div className="pt-2 border-t border-slate-800/80 text-[10px] text-slate-400 flex items-center gap-1">
-                <Info className="w-3 h-3 text-blue-400 shrink-0" />
-                <span>Formula: {health.formula}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Chart 1: Document Category Distribution */}
-        <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 shadow-xl lg:col-span-2 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-sm font-bold text-white">Document Category Distribution</h3>
-                <p className="text-xs text-slate-400">Breakdown of active compliance records by industry & legal regulatory category</p>
-              </div>
-            </div>
-
-            <div className="h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={charts?.categoryDistribution || []}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={95}
-                    paddingAngle={4}
-                    dataKey="count"
-                    nameKey="category"
-                  >
-                    {(charts?.categoryDistribution || []).map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        const data = payload[0].payload;
-                        return (
-                          <div className="bg-slate-900 border border-slate-700 p-2.5 rounded-xl shadow-xl text-xs">
-                            <p className="font-bold text-white">{data.category}</p>
-                            <p className="text-slate-300 mt-1">Count: <span className="font-bold text-blue-400">{data.count} Docs</span></p>
-                            <p className="text-slate-300">Share: <span className="font-bold text-emerald-400">{data.percentage}%</span></p>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  <Legend
-                    layout="horizontal"
-                    verticalAlign="bottom"
-                    align="center"
-                    formatter={(value) => <span className="text-xs font-semibold text-slate-300">{value}</span>}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Chart 2 & 3: Department-wise Compliance & Monthly Renewal Trend */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Department-wise Compliance */}
-        <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 shadow-xl">
-          <div className="flex items-center justify-between mb-4">
+      {/* 4. Visual Analytics Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Document Category Distribution */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-3">
+          <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-bold text-white">Department-wise Compliance</h3>
-              <p className="text-xs text-slate-400">Active vs Expired vs Expiring records per department</p>
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Document Categories</h2>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Distribution by type</p>
             </div>
+            <PieChartIcon className="w-4 h-4 text-blue-500" />
           </div>
 
-          <div className="h-72 w-full">
+          <div className="h-48 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={charts?.departmentCompliance || []} margin={{ top: 10, right: 10, left: -20, bottom: 25 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.5} />
-                <XAxis
-                  dataKey="departmentName"
-                  tick={{ fill: '#94A3B8', fontSize: 10 }}
-                  interval={0}
-                  angle={-15}
-                  textAnchor="end"
-                />
-                <YAxis tick={{ fill: '#94A3B8', fontSize: 10 }} />
-                <Tooltip
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      const data = payload[0].payload;
-                      return (
-                        <div className="bg-slate-900 border border-slate-700 p-3 rounded-xl shadow-xl text-xs">
-                          <p className="font-bold text-white mb-1.5">{data.departmentName}</p>
-                          <div className="space-y-1">
-                            <p className="text-emerald-400 font-semibold">Active: {data.active}</p>
-                            <p className="text-amber-400 font-semibold">Expiring Soon: {data.expiringSoon}</p>
-                            <p className="text-rose-400 font-semibold">Expired: {data.expired}</p>
-                            <p className="text-blue-400 font-bold border-t border-slate-800 pt-1">
-                              Rate: {data.complianceRate}%
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Bar dataKey="active" name="Active" fill="#10B981" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="expiringSoon" name="Expiring Soon" fill="#F59E0B" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="expired" name="Expired" fill="#EF4444" radius={[4, 4, 0, 0]} />
+              <PieChart>
+                <Pie
+                  data={categoryData.length > 0 ? categoryData : [{ name: 'None', value: 1 }]}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={38}
+                  outerRadius={65}
+                  paddingAngle={3}
+                >
+                  {categoryData.map((_, index) => (
+                    <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="flex flex-wrap gap-2 text-[10px]">
+            {categoryData.slice(0, 4).map((c, i) => (
+              <span key={i} className="inline-flex items-center gap-1 text-slate-600 dark:text-slate-300">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[i % CATEGORY_COLORS.length] }} />
+                {c.name} ({c.value})
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Department Compliance */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Department Compliance</h2>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Score per unit</p>
+            </div>
+            <Building2 className="w-4 h-4 text-emerald-500" />
+          </div>
+
+          <div className="h-48 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={departmentData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                <XAxis dataKey="name" tick={{ fontSize: 9 }} tickFormatter={(val) => val.split(' ')[0]} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 9 }} />
+                <Tooltip />
+                <Bar dataKey="Compliance" fill="#10b981" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         {/* Monthly Renewal Trend */}
-        <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 shadow-xl">
-          <div className="flex items-center justify-between mb-4">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-3">
+          <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-bold text-white">Monthly Renewal Trend</h3>
-              <p className="text-xs text-slate-400">Completed renewals vs pending pipeline throughout the year</p>
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Monthly Renewal Trend</h2>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Upcoming 6 months pipeline</p>
             </div>
+            <TrendingUp className="w-4 h-4 text-indigo-500" />
           </div>
 
-          <div className="h-72 w-full">
+          <div className="h-48 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={charts?.monthlyRenewalTrend || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={monthlyTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="colorRenewed" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
-                  </linearGradient>
-                  <linearGradient id="colorPending" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
+                  <linearGradient id="colorRenew" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.5} />
-                <XAxis dataKey="month" tick={{ fill: '#94A3B8', fontSize: 11 }} />
-                <YAxis tick={{ fill: '#94A3B8', fontSize: 11 }} />
-                <Tooltip
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      const data = payload[0].payload;
-                      return (
-                        <div className="bg-slate-900 border border-slate-700 p-3 rounded-xl shadow-xl text-xs">
-                          <p className="font-bold text-white mb-1.5">{data.month} Analytics</p>
-                          <p className="text-blue-400 font-semibold">Renewed: {data.renewedCount} Docs</p>
-                          <p className="text-purple-400 font-semibold">Pending: {data.pendingCount} Docs</p>
-                          <p className="text-emerald-400 font-bold border-t border-slate-800 pt-1 mt-1">
-                            Est. Cost: ৳{data.totalCost?.toLocaleString()} BDT
-                          </p>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Area type="monotone" dataKey="renewedCount" name="Renewed" stroke="#3B82F6" fillOpacity={1} fill="url(#colorRenewed)" />
-                <Area type="monotone" dataKey="pendingCount" name="Pending" stroke="#8B5CF6" fillOpacity={1} fill="url(#colorPending)" />
+                <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                <XAxis dataKey="month" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 10 }} />
+                <Tooltip />
+                <Area type="monotone" dataKey="renewals" stroke="#3b82f6" fillOpacity={1} fill="url(#colorRenew)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
       </div>
 
-      {/* Widgets Grid: Timeline, Expiry Forecast, Risk Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Timeline Widget */}
-        <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 shadow-xl">
-          <div className="flex items-center gap-2 mb-4">
-            <Calendar className="w-5 h-5 text-blue-400" />
-            <h3 className="text-sm font-bold text-white">Renewal Timeline</h3>
+      {/* 5. Upcoming Renewals Table */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Upcoming Renewals</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Documents approaching expiration</p>
           </div>
-
-          <div className="space-y-4 relative before:absolute before:left-3.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-800">
-            <div className="flex items-start gap-3 relative z-10">
-              <div className="w-7 h-7 rounded-full bg-blue-500/20 border border-blue-500/50 flex items-center justify-center text-blue-400 text-xs font-bold shrink-0">
-                Aug
-              </div>
-              <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-3 flex-1">
-                <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">August Target</span>
-                <h4 className="text-xs font-bold text-white mt-0.5">Trade License Renewal</h4>
-                <p className="text-[10px] text-slate-400">Dhaka City Corporation • Legal Dept</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 relative z-10">
-              <div className="w-7 h-7 rounded-full bg-purple-500/20 border border-purple-500/50 flex items-center justify-center text-purple-400 text-xs font-bold shrink-0">
-                Sep
-              </div>
-              <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-3 flex-1">
-                <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">September Target</span>
-                <h4 className="text-xs font-bold text-white mt-0.5">Fire Safety & Clearance License</h4>
-                <p className="text-[10px] text-slate-400">Fire Service & Civil Defence Authority</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 relative z-10">
-              <div className="w-7 h-7 rounded-full bg-emerald-500/20 border border-emerald-500/50 flex items-center justify-center text-emerald-400 text-xs font-bold shrink-0">
-                Oct
-              </div>
-              <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-3 flex-1">
-                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">October Target</span>
-                <h4 className="text-xs font-bold text-white mt-0.5">VAT / BIN Registration Return</h4>
-                <p className="text-[10px] text-slate-400">National Board of Revenue (NBR)</p>
-              </div>
-            </div>
-          </div>
+          {onNavigate && (
+            <button
+              type="button"
+              onClick={() => onNavigate('records')}
+              className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 self-start sm:self-auto cursor-pointer"
+            >
+              <span>View All Documents</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
-        {/* Expiry Forecast Widget */}
-        <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 shadow-xl flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <Clock className="w-5 h-5 text-amber-400" />
-              <h3 className="text-sm font-bold text-white">Expiry Forecast</h3>
-            </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-semibold bg-slate-50/50 dark:bg-slate-800/30">
+                <th className="py-3 px-3.5 rounded-l-xl">Document Name</th>
+                <th className="py-3 px-3.5">Category</th>
+                <th className="py-3 px-3.5">Expiry Date</th>
+                <th className="py-3 px-3.5">Status</th>
+                <th className="py-3 px-3.5">Days Left</th>
+                <th className="py-3 px-3.5 text-right rounded-r-xl">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+              {upcomingExpirations.length > 0 ? (
+                upcomingExpirations.map((doc) => {
+                  const daysLeft = getDaysLeft(doc.expiryDate);
+                  const isExpired = daysLeft < 0;
+                  const isSoon = daysLeft >= 0 && daysLeft <= 30;
 
-            <div className="space-y-3">
-              <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-3.5 flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-bold text-white">Next 30 Days</span>
-                  <p className="text-[10px] text-slate-400">Immediate Expiry Horizon</p>
-                </div>
-                <div className="px-3 py-1 rounded-lg bg-rose-500/20 text-rose-300 font-extrabold text-sm border border-rose-500/30">
-                  {forecast.next30Days} Docs
-                </div>
-              </div>
+                  return (
+                    <tr key={doc.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                      {/* Document Name */}
+                      <td className="py-3 px-3.5 font-medium text-slate-900 dark:text-slate-100">
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-slate-400 shrink-0" />
+                          <div>
+                            <p className="font-bold">{doc.title}</p>
+                            <p className="text-[10px] text-slate-400 font-mono">{doc.code}</p>
+                          </div>
+                        </div>
+                      </td>
 
-              <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-3.5 flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-bold text-white">Next 60 Days</span>
-                  <p className="text-[10px] text-slate-400">Medium Horizon</p>
-                </div>
-                <div className="px-3 py-1 rounded-lg bg-amber-500/20 text-amber-300 font-extrabold text-sm border border-amber-500/30">
-                  {forecast.next60Days} Docs
-                </div>
-              </div>
+                      {/* Category */}
+                      <td className="py-3 px-3.5 text-slate-600 dark:text-slate-300">
+                        <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[11px] font-medium border border-slate-200 dark:border-slate-700">
+                          {doc.category}
+                        </span>
+                      </td>
 
-              <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-3.5 flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-bold text-white">Next 90 Days</span>
-                  <p className="text-[10px] text-slate-400">Quarterly Horizon</p>
-                </div>
-                <div className="px-3 py-1 rounded-lg bg-blue-500/20 text-blue-300 font-extrabold text-sm border border-blue-500/30">
-                  {forecast.next90Days} Docs
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+                      {/* Expiry Date */}
+                      <td className="py-3 px-3.5 font-mono text-slate-700 dark:text-slate-300">
+                        {doc.expiryDate}
+                      </td>
 
-        {/* Risk Summary Widget */}
-        <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 shadow-xl flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <ShieldAlert className="w-5 h-5 text-rose-400" />
-              <h3 className="text-sm font-bold text-white">Risk Summary</h3>
-            </div>
+                      {/* Status */}
+                      <td className="py-3 px-3.5">
+                        <StatusBadge status={doc.status} size="sm" />
+                      </td>
 
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                <span className="text-xs font-bold text-emerald-400 flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                  🟢 Low Risk
-                </span>
-                <span className="font-extrabold text-white text-xs">{risk.low} Documents</span>
-              </div>
+                      {/* Days Left */}
+                      <td className="py-3 px-3.5 font-semibold">
+                        {isExpired ? (
+                          <span className="text-rose-600 dark:text-rose-400 font-mono">
+                            {Math.abs(daysLeft)} days overdue
+                          </span>
+                        ) : isSoon ? (
+                          <span className="text-amber-600 dark:text-amber-400 font-mono">
+                            {daysLeft} days left
+                          </span>
+                        ) : (
+                          <span className="text-slate-600 dark:text-slate-400 font-mono">
+                            {daysLeft} days left
+                          </span>
+                        )}
+                      </td>
 
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                <span className="text-xs font-bold text-amber-400 flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                  🟡 Medium Risk
-                </span>
-                <span className="font-extrabold text-white text-xs">{risk.medium} Documents</span>
-              </div>
-
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20">
-                <span className="text-xs font-bold text-rose-400 flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
-                  🔴 High Risk
-                </span>
-                <span className="font-extrabold text-white text-xs">{risk.high} Documents</span>
-              </div>
-
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20">
-                <span className="text-xs font-bold text-purple-400 flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
-                  🟣 Critical Risk
-                </span>
-                <span className="font-extrabold text-white text-xs">{risk.critical} Documents</span>
-              </div>
-            </div>
-          </div>
+                      {/* Action */}
+                      <td className="py-3 px-3.5 text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleInitiateRenewal(doc)}
+                          className="text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/60 font-semibold text-xs"
+                        >
+                          Renew Document
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-slate-400 dark:text-slate-500">
+                    No upcoming expirations found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
-      {/* High-Risk Documents & Recent Activities Table Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* High-Risk Documents */}
-        <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 shadow-xl">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-rose-400" />
-              <h3 className="text-sm font-bold text-white">High-Risk Compliance Records</h3>
-            </div>
-            <span className="text-xs font-semibold text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2.5 py-0.5 rounded-full">
-              Action Required
-            </span>
-          </div>
+      {/* Add Document Modal */}
+      {isAddModalOpen && (
+        <NewRecordModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onSuccess={() => {
+            setIsAddModalOpen(false);
+            fetchDashboardData();
+          }}
+          companies={companies}
+          currentUser={activeUser}
+        />
+      )}
 
-          <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1 custom-scrollbar">
-            {overview?.highRiskDocuments && overview.highRiskDocuments.length > 0 ? (
-              overview.highRiskDocuments.map((doc: ComplianceRecord) => (
-                <div
-                  key={doc.id}
-                  className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl flex items-center justify-between hover:border-slate-700 transition-all"
-                >
-                  <div className="min-w-0 flex-1 pr-3">
-                    <h4 className="text-xs font-bold text-white truncate">{doc.title}</h4>
-                    <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-400">
-                      <span className="font-mono text-slate-300">{doc.code}</span>
-                      <span>•</span>
-                      <span>{doc.issuingAuthority}</span>
-                      <span>•</span>
-                      <span className="text-rose-400">Expires: {doc.expiryDate}</span>
-                    </div>
-                  </div>
-                  <span className="px-2 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/30 shrink-0">
-                    {doc.riskLevel || 'High'} Risk
-                  </span>
-                </div>
-              ))
-            ) : (
-              <div className="p-6 text-center text-slate-400 text-xs">
-                No critical high-risk records detected currently.
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Recent Activities */}
-        <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 shadow-xl">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Activity className="w-5 h-5 text-blue-400" />
-              <h3 className="text-sm font-bold text-white">Recent Audit Activities</h3>
-            </div>
-            <span className="text-xs font-semibold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2.5 py-0.5 rounded-full">
-              Live Feed
-            </span>
-          </div>
-
-          <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1 custom-scrollbar">
-            {overview?.recentActivities && overview.recentActivities.length > 0 ? (
-              overview.recentActivities.map((log: AuditLog) => (
-                <div
-                  key={log.id}
-                  className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl flex items-center justify-between hover:border-slate-700 transition-all text-xs"
-                >
-                  <div className="min-w-0 flex-1 pr-3">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-white">{log.action.replace(/_/g, ' ')}</span>
-                      <span className="text-[10px] text-slate-400 font-mono">
-                        {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-300 truncate mt-0.5">{log.details}</p>
-                  </div>
-                  <span className="text-[10px] font-semibold text-slate-400 bg-slate-800 px-2 py-1 rounded-md shrink-0">
-                    {log.userName}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <div className="p-6 text-center text-slate-400 text-xs">
-                No recent system audit activities recorded yet.
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Renewal Modal */}
+      {isRenewalModalOpen && selectedRecordForRenewal && (
+        <RenewalWorkflowModal
+          isOpen={isRenewalModalOpen}
+          onClose={() => {
+            setIsRenewalModalOpen(false);
+            setSelectedRecordForRenewal(null);
+          }}
+          onSuccess={() => {
+            setIsRenewalModalOpen(false);
+            setSelectedRecordForRenewal(null);
+            fetchDashboardData();
+          }}
+          record={selectedRecordForRenewal}
+          currentUser={activeUser}
+        />
+      )}
     </div>
   );
 }

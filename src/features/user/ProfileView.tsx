@@ -3,11 +3,12 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../../context/AuthContext';
-import { User, Mail, Building2, Phone, Briefcase, Shield, KeyRound, Edit2, Save, CheckCircle2, UserCheck } from 'lucide-react';
+import { User, Mail, Phone, Briefcase, Shield, KeyRound, Save, CheckCircle2, Building2 } from 'lucide-react';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import ChangePasswordView from './ChangePasswordView';
 import apiClient from '../../lib/api-client';
+import { getRoleLabel } from '../../lib/permissions';
 import toast from 'react-hot-toast';
 
 const profileSchema = z.object({
@@ -15,7 +16,6 @@ const profileSchema = z.object({
   email: z.string().email('Valid work email required'),
   phoneNumber: z.string().optional(),
   department: z.string().optional(),
-  avatarUrl: z.string().optional(),
 });
 
 export type ProfileFormData = z.infer<typeof profileSchema>;
@@ -36,7 +36,6 @@ export const ProfileView: React.FC = () => {
       email: activeUser?.email || '',
       phoneNumber: (activeUser as any)?.phoneNumber || '',
       department: (activeUser as any)?.department || '',
-      avatarUrl: (activeUser as any)?.avatarUrl || '',
     },
   });
 
@@ -55,45 +54,36 @@ export const ProfileView: React.FC = () => {
 
   if (!activeUser) return null;
 
-  const formattedRole = (activeUser.role || 'COMPANY_ADMIN').replace('_', ' ');
+  const roleLabel = getRoleLabel(activeUser.role);
+  const isAdmin = roleLabel === 'Admin';
 
   return (
-    <div className="space-y-6">
-      {/* Top Header Card */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-6 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+    <div className="space-y-6 pb-12">
+      {/* Top Header Card: Simple Human User Icon */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
-<<<<<<< HEAD
-          <div className="w-14 h-14 rounded-2xl bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0 shadow-2xs">
-            <User className="w-7 h-7 text-slate-700 dark:text-slate-200" />
-=======
-          <div className="w-14 h-14 rounded-xl bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border border-slate-800 dark:border-slate-200 flex items-center justify-center shrink-0 shadow-2xs">
-            <User className="w-7 h-7 text-slate-200 dark:text-slate-800" />
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
+          <div className="w-14 h-14 rounded-2xl bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0">
+            <User className="w-7 h-7" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
               {activeUser.name}
-              <span className="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 uppercase tracking-wider">
-                {formattedRole}
+              <span className="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                {roleLabel}
               </span>
             </h1>
-<<<<<<< HEAD
-            <p className="text-xs text-slate-600 dark:text-slate-400 font-mono mt-0.5">{activeUser.email}</p>
-            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Tenant Subsidiary: <span className="font-semibold text-slate-800 dark:text-slate-200">{activeUser.companyName || 'Corporate Workspace'}</span></p>
-=======
-            <p className="text-xs text-slate-500 font-mono mt-0.5">{activeUser.email}</p>
-            <p className="text-xs text-slate-500 mt-1">Tenant Subsidiary: <span className="font-medium text-slate-700 dark:text-slate-300">{activeUser.companyName || 'Corporate Workspace'}</span></p>
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">{activeUser.email}</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Company: <span className="font-semibold text-slate-800 dark:text-slate-200">{activeUser.companyName || 'Corporate Workspace'}</span></p>
           </div>
         </div>
 
         {/* Tab Toggle Navigation */}
-        <div className="flex items-center gap-1 bg-slate-100/90 dark:bg-slate-800/90 p-1 rounded-lg border border-slate-200/80 dark:border-slate-700/80 text-xs font-semibold">
+        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold">
           <button
             onClick={() => setActiveTab('details')}
-            className={`px-3.5 py-1.5 rounded-md transition-colors ${
+            className={`px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
               activeTab === 'details'
-                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs font-bold'
+                ? 'bg-white text-slate-900 dark:bg-slate-900 dark:text-white shadow-2xs font-bold border border-slate-200 dark:border-slate-700'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
@@ -101,9 +91,9 @@ export const ProfileView: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('edit')}
-            className={`px-3.5 py-1.5 rounded-md transition-colors ${
+            className={`px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
               activeTab === 'edit'
-                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs font-bold'
+                ? 'bg-white text-slate-900 dark:bg-slate-900 dark:text-white shadow-2xs font-bold border border-slate-200 dark:border-slate-700'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
@@ -111,9 +101,9 @@ export const ProfileView: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('security')}
-            className={`px-3.5 py-1.5 rounded-md transition-colors ${
+            className={`px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
               activeTab === 'security'
-                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs font-bold'
+                ? 'bg-white text-slate-900 dark:bg-slate-900 dark:text-white shadow-2xs font-bold border border-slate-200 dark:border-slate-700'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
@@ -125,7 +115,7 @@ export const ProfileView: React.FC = () => {
       {/* Tab Content 1: Overview */}
       {activeTab === 'details' && (
         <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-4">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
               <User className="w-4 h-4 text-blue-500" /> Account Information
             </h3>
@@ -140,7 +130,7 @@ export const ProfileView: React.FC = () => {
               </div>
               <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
                 <span className="text-slate-500 font-medium">Assigned Role</span>
-                <span className="font-bold text-blue-600 uppercase">{formattedRole}</span>
+                <span className="font-bold text-blue-600 dark:text-blue-400">{roleLabel}</span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
                 <span className="text-slate-500 font-medium">Department</span>
@@ -149,60 +139,40 @@ export const ProfileView: React.FC = () => {
                 </span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
-<<<<<<< HEAD
-=======
-                <span className="text-slate-500 font-medium">Phone Number</span>
-                <span className="font-mono text-slate-800 dark:text-slate-200">
-                  {activeUser.phone || (activeUser as any)?.phoneNumber || '+880 1712-345678'}
-                </span>
-              </div>
-              <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
-                <span className="text-slate-500 font-medium">Organization</span>
+                <span className="text-slate-500 font-medium">Company</span>
                 <span className="font-semibold text-slate-800 dark:text-slate-200">{activeUser.companyName || 'Not specified'}</span>
               </div>
               <div className="flex justify-between py-1.5">
-                <span className="text-slate-500 font-medium">Verification Status</span>
-                <span className="text-emerald-600 font-bold flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Verified Corporate SSO
+                <span className="text-slate-500 font-medium">Account Status</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Active
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-4">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <Shield className="w-4 h-4 text-indigo-500" /> Security & Role Capabilities
+              <Shield className="w-4 h-4 text-blue-500" /> Role & Permissions
             </h3>
-            <div className="space-y-2.5 text-xs text-slate-600 dark:text-slate-300">
-              <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-700/80 space-y-1">
-                <p className="font-bold text-slate-900 dark:text-slate-100">Role Scope: {formattedRole}</p>
-                <p className="text-[11px] text-slate-500">
-                  {activeUser.role?.toLowerCase().includes('admin')
-                    ? 'Full administrative privileges: add records, manage tenants, assign users, approve renewals, view complete audit logs.'
-                    : activeUser.role?.toLowerCase().includes('officer') || activeUser.role?.toLowerCase().includes('manager')
-                    ? 'Management privileges: oversee compliance pipeline, advance renewal steps, trigger email reminders, edit records.'
-                    : 'Employee / Standard privileges: view assigned compliance tasks, submit renewal documents, view company directory.'}
+            <div className="space-y-3 text-xs text-slate-600 dark:text-slate-300">
+              <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/60 space-y-1.5">
+                <p className="font-bold text-slate-900 dark:text-slate-100">Role: {roleLabel}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {isAdmin
+                    ? 'Administrative privileges: Manage company documents, register records, approve renewals, manage users, view compliance reports and audit logs.'
+                    : 'Standard employee privileges: View assigned compliance records, renew documents, view company calendar and alerts.'}
                 </p>
               </div>
               <div className="pt-2">
-<<<<<<< HEAD
                 <Button
                   variant="secondary"
                   fullWidth
                   onClick={() => setActiveTab('security')}
                   leftIcon={<KeyRound className="w-4 h-4 text-amber-500" />}
                 >
-                  Change Account Password
+                  Change Password
                 </Button>
-=======
-                <button
-                  onClick={() => setActiveTab('security')}
-                  className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2"
-                >
-                  <KeyRound className="w-4 h-4 text-amber-500" /> Change Account Password
-                </button>
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
               </div>
             </div>
           </div>
@@ -211,7 +181,7 @@ export const ProfileView: React.FC = () => {
 
       {/* Tab Content 2: Edit Profile Form */}
       {activeTab === 'edit' && (
-        <div className="max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+        <div className="max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-4">
           <h3 className="text-sm font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3">
             Update Profile Information
           </h3>
@@ -236,24 +206,19 @@ export const ProfileView: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 label="Phone Number"
-<<<<<<< HEAD
                 placeholder="+1 (555) 019-2834"
-=======
-                placeholder="+880 1712-345678"
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
                 leftIcon={<Phone className="w-4 h-4 text-slate-400" />}
                 {...register('phoneNumber')}
               />
               <Input
                 label="Department"
-                placeholder="Compliance & Legal"
+                placeholder="Operations"
                 leftIcon={<Briefcase className="w-4 h-4 text-slate-400" />}
                 {...register('department')}
               />
             </div>
 
             <div className="pt-2 flex justify-end gap-3">
-<<<<<<< HEAD
               <Button
                 type="button"
                 variant="secondary"
@@ -261,15 +226,6 @@ export const ProfileView: React.FC = () => {
               >
                 Cancel
               </Button>
-=======
-              <button
-                type="button"
-                onClick={() => setActiveTab('details')}
-                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-              >
-                Cancel
-              </button>
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
               <Button
                 type="submit"
                 variant="primary"

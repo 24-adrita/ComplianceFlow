@@ -159,11 +159,7 @@ export const statusColors = {
 
 export const typography = {
   fontFamily: {
-<<<<<<< HEAD
-    sans: "'Inter', system-ui, 'Segoe UI', Roboto, sans-serif",
-=======
     sans: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
     display: "'Plus Jakarta Sans', system-ui, sans-serif",
     mono: "'JetBrains Mono', monospace",
   },

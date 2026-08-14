@@ -2,11 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-<<<<<<< HEAD
 import { Mail, Lock, AlertCircle, ArrowRight, ShieldAlert } from 'lucide-react';
-=======
-import { Mail, Lock, AlertCircle, ArrowRight } from 'lucide-react';
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import { useAuth } from '../../../context/AuthContext';
@@ -69,7 +65,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     }
   };
 
-<<<<<<< HEAD
   // Helper for quick demo login fill
   const handleQuickFill = (email: string, pass: string) => {
     setValue('email', email, { shouldValidate: true });
@@ -86,16 +81,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
           <div className="flex-1">
             <p className="font-medium text-rose-800 dark:text-rose-200">Authentication error</p>
-=======
-  return (
-    <div className="space-y-6">
-      {/* Error Alert Box */}
-      {errorMessage && (
-        <div className="p-3.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs flex items-start gap-2.5 animate-fadeIn">
-          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
-          <div className="flex-1">
-            <p className="font-semibold">Authentication Error</p>
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
             <p className="mt-0.5">{errorMessage}</p>
           </div>
         </div>
@@ -107,12 +92,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           <Input
             label="Email Address"
             type="email"
-<<<<<<< HEAD
             placeholder="name@company.com"
-=======
-            placeholder="admin@acme.com"
-            themeVariant="light"
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
             leftIcon={<Mail className="w-4 h-4 text-slate-400" />}
             error={errors.email?.message}
             {...register('email')}
@@ -124,10 +104,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             label="Password"
             type="password"
             placeholder="••••••••"
-<<<<<<< HEAD
-=======
-            themeVariant="light"
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
             leftIcon={<Lock className="w-4 h-4 text-slate-400" />}
             error={errors.password?.message}
             showPasswordToggle
@@ -136,7 +112,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         </div>
 
         {/* Remember Me & Forgot Password Link */}
-<<<<<<< HEAD
         <div className="flex items-center justify-between text-xs pt-0.5">
           <label className="flex items-center gap-2 select-none cursor-pointer text-slate-600 dark:text-slate-400">
             <input
@@ -145,31 +120,15 @@ export const LoginForm: React.FC<LoginFormProps> = ({
               {...register('rememberMe')}
             />
             <span>Remember me</span>
-=======
-        <div className="flex items-center justify-between text-xs pt-1">
-          <label className="flex items-center gap-2 select-none cursor-pointer text-slate-600 dark:text-slate-400">
-            <input
-              type="checkbox"
-              className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800"
-              {...register('rememberMe')}
-            />
-            <span>Remember me on this device</span>
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
           </label>
 
           {onNavigateForgotPassword && (
             <button
               type="button"
               onClick={onNavigateForgotPassword}
-<<<<<<< HEAD
               className="text-blue-600 dark:text-blue-400 font-medium hover:underline cursor-pointer"
             >
               Forgot password?
-=======
-              className="text-blue-600 dark:text-blue-400 font-semibold hover:underline"
-            >
-              Forgot Password?
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
             </button>
           )}
         </div>
@@ -181,67 +140,22 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           fullWidth
           isLoading={isSubmitting}
           rightIcon={!isSubmitting ? <ArrowRight className="w-4 h-4" /> : undefined}
-<<<<<<< HEAD
-          className="mt-1 py-2.5"
+          className="mt-2 py-2.5"
         >
-          {isSubmitting ? 'Signing in...' : 'Sign in'}
+          {isSubmitting ? 'Signing in...' : 'Sign In'}
         </Button>
       </form>
 
-      {/* Demo Credentials Drawer */}
-      <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 space-y-2">
-        <div className="flex items-center justify-between text-[11px] font-medium text-slate-500 dark:text-slate-400">
-          <span className="flex items-center gap-1.5">
-            <ShieldAlert className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            Quick demo accounts
-          </span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-          <button
-            type="button"
-            onClick={() => handleQuickFill('admin@compliance.com.bd', 'Admin123!')}
-            className="p-2 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 text-left transition-colors flex flex-col cursor-pointer"
-          >
-            <span className="font-medium text-slate-800 dark:text-slate-200">Super Admin</span>
-            <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate">admin@compliance.com.bd</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleQuickFill('tanvir.ahmed@dhakatech.com.bd', 'Officer123!')}
-            className="p-2 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 text-left transition-colors flex flex-col cursor-pointer"
-          >
-            <span className="font-medium text-slate-800 dark:text-slate-200">Compliance Officer</span>
-            <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate">tanvir.ahmed@dhakatech.com.bd</span>
-          </button>
-        </div>
-      </div>
-
       {/* Navigation to Register */}
       {onNavigateRegister && (
-        <div className="text-center text-xs text-slate-500 dark:text-slate-400 pt-1">
+        <div className="text-center text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-200/80 dark:border-slate-800/80">
           Don&apos;t have an account yet?{' '}
           <button
+            type="button"
             onClick={onNavigateRegister}
             className="text-blue-600 dark:text-blue-400 font-semibold hover:underline cursor-pointer"
           >
-            Register your organization
-=======
-          className="mt-2"
-        >
-          {isSubmitting ? 'Authenticating...' : 'Sign In to Workspace'}
-        </Button>
-      </form>
-
-      {/* Navigation to Register */}
-      {onNavigateRegister && (
-        <div className="text-center text-xs text-slate-500 dark:text-slate-400 pt-2">
-          Don&apos;t have a company account yet?{' '}
-          <button
-            onClick={onNavigateRegister}
-            className="text-blue-600 dark:text-blue-400 font-bold hover:underline"
-          >
-            Register your Organization
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
+            Create or join company
           </button>
         </div>
       )}

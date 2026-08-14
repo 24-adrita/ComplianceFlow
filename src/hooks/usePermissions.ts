@@ -13,7 +13,6 @@ export function usePermissions() {
   const canonicalRole: CanonicalRole = normalizeRole(user?.role);
 
   const isAdmin = canonicalRole === 'ADMIN';
-  const isManager = canonicalRole === 'MANAGER';
   const isEmployee = canonicalRole === 'EMPLOYEE';
 
   return {
@@ -21,9 +20,9 @@ export function usePermissions() {
     role: user?.role,
     canonicalRole,
     isAdmin,
-    isManager,
     isEmployee,
     canAccessRoute: (route: NavRoute) => canAccessNavRoute(user?.role, route),
     canPerformAction: (action: PermissionAction) => canPerformAction(user?.role, action),
   };
 }
+

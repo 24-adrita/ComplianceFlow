@@ -32,6 +32,7 @@ import {
 import { ComplianceRecord, ComplianceCategory, RiskLevel, ComplianceStatus } from '../../types';
 import { ApiService } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { hasPermission, Permissions } from '../../lib/permissions';
 import { StatusBadge } from '../common/StatusBadge';
 import { RiskBadge } from '../common/RiskBadge';
 import { NewRecordModal } from '../modals/NewRecordModal';
@@ -40,6 +41,11 @@ import toast from 'react-hot-toast';
 
 export default function ComplianceRecordsView() {
   const { user, selectedCompanyScope, companies } = useAuth();
+
+  const canCreateRecord = hasPermission(user, Permissions.CREATE_RECORDS);
+  const canEditRecord = hasPermission(user, Permissions.EDIT_RECORDS);
+  const canDeleteRecord = hasPermission(user, Permissions.DELETE_RECORDS);
+  const canAdvanceRenewal = hasPermission(user, Permissions.APPROVE_RENEWALS);
 
   // Data states
   const [records, setRecords] = useState<ComplianceRecord[]>([]);
@@ -137,8 +143,8 @@ export default function ComplianceRecordsView() {
           if (rec.status !== 'warning' && (daysLeft < 0 || daysLeft >= 30)) return false;
         } else if (statusFilter === 'expired') {
           if (rec.status !== 'expired' && daysLeft >= 0) return false;
-        } else if (statusFilter === 'renewal_in_progress') {
-          if (rec.status !== 'renewal_in_progress' && rec.status !== 'pending_review') return false;
+        } else if (statusFilter === 'renewed') {
+          if ((rec.status as string) !== 'renewed' && !(rec.notes && rec.notes.includes('[Renewed on'))) return false;
         }
       }
 
@@ -228,17 +234,19 @@ export default function ComplianceRecordsView() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => {
-              setEditingRecord(null);
-              setIsNewModalOpen(true);
-            }}
-            leftIcon={<Plus className="w-4 h-4" />}
-          >
-            Add Compliance Record
-          </Button>
+          {canCreateRecord && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                setEditingRecord(null);
+                setIsNewModalOpen(true);
+              }}
+              leftIcon={<Plus className="w-4 h-4" />}
+            >
+              Add Compliance Record
+            </Button>
+          )}
         </div>
       </div>
 
@@ -396,10 +404,10 @@ export default function ComplianceRecordsView() {
               className="w-full bg-slate-950/80 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
             >
               <option value="all">All Statuses</option>
-              <option value="active">Active & Valid</option>
-              <option value="expiring_soon">Expiring Soon (&lt;30d)</option>
-              <option value="expired">Expired / Lapsed</option>
-              <option value="renewal_in_progress">In Renewal Progress</option>
+              <option value="active">Active</option>
+              <option value="expiring_soon">Expiring Soon</option>
+              <option value="expired">Expired</option>
+              <option value="renewed">Renewed</option>
             </select>
           </div>
         </div>
@@ -563,30 +571,36 @@ export default function ComplianceRecordsView() {
                           >
                             <Eye className="w-3.5 h-3.5" />
                           </button>
-                          <button
-                            onClick={() => {
-                              setEditingRecord(rec);
-                              setIsNewModalOpen(true);
-                            }}
-                            className="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-blue-400 transition"
-                            title="Edit Record"
-                          >
-                            <Edit className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleStartRenewal(rec)}
-                            className="p-1.5 hover:bg-blue-500/20 rounded text-blue-400 transition"
-                            title="Initiate Renewal Workflow"
-                          >
-                            <RefreshCw className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(rec.id)}
-                            className="p-1.5 hover:bg-rose-500/20 rounded text-slate-400 hover:text-rose-400 transition"
-                            title="Delete Record"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          {canEditRecord && (
+                            <button
+                              onClick={() => {
+                                setEditingRecord(rec);
+                                setIsNewModalOpen(true);
+                              }}
+                              className="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-blue-400 transition"
+                              title="Edit Record"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          {canAdvanceRenewal && (
+                            <button
+                              onClick={() => handleStartRenewal(rec)}
+                              className="p-1.5 hover:bg-blue-500/20 rounded text-blue-400 transition"
+                              title="Initiate Renewal Workflow"
+                            >
+                              <RefreshCw className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          {canDeleteRecord && (
+                            <button
+                              onClick={() => handleDelete(rec.id)}
+                              className="p-1.5 hover:bg-rose-500/20 rounded text-slate-400 hover:text-rose-400 transition"
+                              title="Delete Record"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

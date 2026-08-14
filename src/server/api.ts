@@ -1,9 +1,5 @@
 import { Router, Request, Response } from 'express';
-<<<<<<< HEAD
 import { DbStore } from './db.js';
-=======
-import { DbStore } from './db';
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
 
 const router = Router();
 
@@ -18,13 +14,30 @@ function extractUserId(req: Request): string {
   return '';
 }
 
-function getActorFromRequest(req: Request) {
+function getRoleCategoryFromRole(role?: string): 'admin' | 'manager' | 'employee' {
+  if (!role) return 'employee';
+  const norm = role.toLowerCase().trim();
+  if (norm.includes('super_admin') || norm.includes('company_admin') || norm === 'admin' || norm === 'global_admin') {
+    return 'admin';
+  }
+  if (norm.includes('compliance_officer') || norm.includes('department_manager') || norm.includes('manager')) {
+    return 'manager';
+  }
+  return 'employee';
+}
+
+function getActorUser(req: Request) {
   const userId = extractUserId(req);
-<<<<<<< HEAD
-  const user = (userId ? DbStore.getUserById(userId) : null) || DbStore.getUsers()[0];
-=======
-  const user = userId ? DbStore.getUserById(userId) : null;
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
+  if (userId) {
+    const u = DbStore.getUserById(userId);
+    if (u) return u;
+  }
+  const users = DbStore.getUsers();
+  return users.length > 0 ? users[0] : null;
+}
+
+function getActorFromRequest(req: Request) {
+  const user = getActorUser(req);
   if (user) {
     return {
       userId: user.id,
@@ -33,15 +46,9 @@ function getActorFromRequest(req: Request) {
     };
   }
   return {
-<<<<<<< HEAD
     userId: 'usr_admin',
     userName: 'Adrita Chakraborty',
-    userRole: 'super_admin'
-=======
-    userId: 'usr_guest',
-    userName: 'Guest User',
-    userRole: 'user'
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
+    userRole: 'company_admin'
   };
 }
 
@@ -75,11 +82,7 @@ router.post('/auth/login', (req: Request, res: Response) => {
 
 router.get('/auth/me', (req: Request, res: Response) => {
   const userId = extractUserId(req);
-<<<<<<< HEAD
   const user = (userId ? DbStore.getUserById(userId) : null) || DbStore.getUsers()[0];
-=======
-  const user = userId ? DbStore.getUserById(userId) : null;
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
   
   if (!user) {
     return res.status(401).json({ success: false, message: 'Unauthenticated session.' });
@@ -279,7 +282,6 @@ router.get('/dashboard/metrics', (req: Request, res: Response) => {
   return res.json({ success: true, metrics });
 });
 
-<<<<<<< HEAD
 router.get('/dashboard/overview', (req: Request, res: Response) => {
   const companyId = req.query.companyId as string;
   const overviewData = DbStore.getDashboardOverview(companyId);
@@ -303,9 +305,6 @@ router.get('/dashboard/charts', (req: Request, res: Response) => {
     data: chartsData
   });
 });
-
-=======
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
 // =====================================
 // 3. COMPANY MANAGEMENT
 // =====================================
@@ -321,6 +320,11 @@ router.get('/companies/:id', (req: Request, res: Response) => {
 });
 
 router.post('/companies', (req: Request, res: Response) => {
+  const actor = getActorUser(req);
+  if (actor && getRoleCategoryFromRole(actor.role) !== 'admin') {
+    return res.status(403).json({ success: false, message: 'Forbidden: Only Administrators can create companies.' });
+  }
+
   const { name, registrationNumber, taxId, industry, country, contactEmail, contactPhone, address } = req.body;
   if (!name || !registrationNumber) {
     return res.status(400).json({ success: false, message: 'Name and Registration Number are required' });
@@ -342,6 +346,11 @@ router.post('/companies', (req: Request, res: Response) => {
 });
 
 router.put('/companies/:id', (req: Request, res: Response) => {
+  const actor = getActorUser(req);
+  if (actor && getRoleCategoryFromRole(actor.role) !== 'admin') {
+    return res.status(403).json({ success: false, message: 'Forbidden: Only Administrators can update company details.' });
+  }
+
   const updated = DbStore.updateCompany(req.params.id, req.body);
   if (!updated) return res.status(404).json({ success: false, message: 'Company not found' });
   return res.json({ success: true, company: updated });
@@ -484,6 +493,11 @@ router.get('/users/:id', (req: Request, res: Response) => {
 });
 
 router.post('/users', (req: Request, res: Response) => {
+  const actor = getActorUser(req);
+  if (actor && getRoleCategoryFromRole(actor.role) !== 'admin') {
+    return res.status(403).json({ success: false, message: 'Forbidden: Only Administrators can create new user accounts.' });
+  }
+
   const { name, email, phone, role, companyId, department, avatar, status } = req.body;
   if (!name || !email || !role || !companyId) {
     return res.status(400).json({ success: false, message: 'Name, email, role, and company are required' });
@@ -506,12 +520,22 @@ router.post('/users', (req: Request, res: Response) => {
 });
 
 router.put('/users/:id', (req: Request, res: Response) => {
+  const actor = getActorUser(req);
+  if (actor && getRoleCategoryFromRole(actor.role) !== 'admin') {
+    return res.status(403).json({ success: false, message: 'Forbidden: Only Administrators can modify user details.' });
+  }
+
   const updated = DbStore.updateUser(req.params.id, req.body);
   if (!updated) return res.status(404).json({ success: false, message: 'User not found' });
   return res.json({ success: true, data: updated, user: updated });
 });
 
 router.patch('/users/:id', (req: Request, res: Response) => {
+  const actor = getActorUser(req);
+  if (actor && getRoleCategoryFromRole(actor.role) !== 'admin') {
+    return res.status(403).json({ success: false, message: 'Forbidden: Only Administrators can modify user details.' });
+  }
+
   const updated = DbStore.updateUser(req.params.id, req.body);
   if (!updated) return res.status(404).json({ success: false, message: 'User not found' });
   return res.json({ success: true, data: updated, user: updated });
@@ -585,6 +609,11 @@ router.post('/users/:id/reset-password', (req: Request, res: Response) => {
 });
 
 router.delete('/users/:id', (req: Request, res: Response) => {
+  const actor = getActorUser(req);
+  if (actor && getRoleCategoryFromRole(actor.role) !== 'admin') {
+    return res.status(403).json({ success: false, message: 'Forbidden: Only Administrators can delete user accounts.' });
+  }
+
   const deleted = DbStore.deleteUser(req.params.id);
   if (!deleted) return res.status(404).json({ success: false, message: 'User not found' });
   return res.json({ success: true, message: 'User deleted successfully' });
@@ -609,6 +638,17 @@ router.get('/compliance-records', (req: Request, res: Response) => {
   const limit = parseInt((req.query.limit as string) || '10', 10);
 
   let list = DbStore.getRecords(companyId);
+
+  // Data-level authorization scoping for Employees
+  const actorUser = getActorUser(req);
+  const actorCategory = actorUser ? getRoleCategoryFromRole(actorUser.role) : 'employee';
+  if (actorCategory === 'employee' && actorUser) {
+    list = list.filter(r =>
+      (r.assignedUserId && r.assignedUserId === actorUser.id) ||
+      (r.assignedUserName && r.assignedUserName.toLowerCase().includes(actorUser.name.toLowerCase())) ||
+      (r.department && actorUser.department && r.department.toLowerCase() === actorUser.department.toLowerCase())
+    );
+  }
 
   // Department filter
   if (department && department !== 'all' && department !== 'ALL') {
@@ -741,6 +781,11 @@ router.get('/compliance-records/:id/history', (req: Request, res: Response) => {
 });
 
 router.post('/compliance-records', (req: Request, res: Response) => {
+  const actorUser = getActorUser(req);
+  if (actorUser && getRoleCategoryFromRole(actorUser.role) === 'employee') {
+    return res.status(403).json({ success: false, message: 'Forbidden: Employees cannot create compliance records.' });
+  }
+
   const {
     title, documentName, code, licenseNumber, companyId, department, category, issuingAuthority, issueDate, expiryDate,
     renewalFrequencyDays, renewalFrequency, riskLevel, priority, estimatedCost, assignedUserId, notes, tags, autoRenewal,
@@ -865,6 +910,11 @@ router.delete('/compliance-records/:id/attachment', (req: Request, res: Response
 });
 
 router.delete('/compliance-records/:id', (req: Request, res: Response) => {
+  const actorUser = getActorUser(req);
+  if (actorUser && getRoleCategoryFromRole(actorUser.role) !== 'admin') {
+    return res.status(403).json({ success: false, message: 'Forbidden: Only Administrators can delete compliance records.' });
+  }
+
   const actor = getActorFromRequest(req);
 
   const deleted = DbStore.deleteRecord(req.params.id, actor);

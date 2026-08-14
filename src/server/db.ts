@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import { Company, User, ComplianceRecord, AuditLog, NotificationItem, DashboardMetrics, DepartmentItem, RenewalRecord, RenewalStatus } from '../types/index.js';
-=======
-import { Company, User, ComplianceRecord, AuditLog, NotificationItem, DashboardMetrics, DepartmentItem, RenewalRecord, RenewalStatus } from '../types';
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
 
 // Seed Initial Departments
 let departments: DepartmentItem[] = [
@@ -76,21 +72,14 @@ let companies: Company[] = [
 let users: User[] = [
   {
     id: 'usr_admin',
-<<<<<<< HEAD
     name: 'Adrita Chakraborty',
-=======
-    name: 'Nusrat Jahan',
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
     email: 'admin@compliance.com.bd',
     phone: '+880 1711 234567',
     role: 'super_admin',
     companyId: 'comp_01',
     companyName: 'Dhaka Tech & Enterprise Ltd.',
     department: 'Legal, Tax & Regulatory Affairs',
-<<<<<<< HEAD
     avatar: '',
-=======
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
     status: 'active',
     lastLogin: new Date().toISOString(),
     mfaEnabled: true,
@@ -106,10 +95,7 @@ let users: User[] = [
     companyId: 'comp_01',
     companyName: 'Dhaka Tech & Enterprise Ltd.',
     department: 'Legal, Tax & Regulatory Affairs',
-<<<<<<< HEAD
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-=======
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
     status: 'active',
     lastLogin: new Date(Date.now() - 3600000).toISOString(),
     mfaEnabled: true,
@@ -125,10 +111,7 @@ let users: User[] = [
     companyId: 'comp_02',
     companyName: 'Bengal Pharma & Healthcare Ltd.',
     department: 'Environment, Health & Safety (EHS)',
-<<<<<<< HEAD
     avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
-=======
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
     status: 'active',
     lastLogin: new Date(Date.now() - 7200000).toISOString(),
     mfaEnabled: true,
@@ -155,15 +138,9 @@ let renewals: RenewalRecord[] = [];
 let auditLogs: AuditLog[] = [
   {
     id: 'audit_1001',
-<<<<<<< HEAD
     timestamp: new Date(Date.now() - 15 * 60000).toISOString(),
     userId: 'usr_compliance',
     userName: 'Farhana Nowshin',
-=======
-    timestamp: new Date(Date.now() - 300000).toISOString(),
-    userId: 'usr_compliance',
-    userName: 'Michael Vance',
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
     userRole: 'compliance_officer',
     companyId: 'comp_01',
     action: 'INITIATED_RENEWAL',
@@ -175,39 +152,23 @@ let auditLogs: AuditLog[] = [
   },
   {
     id: 'audit_1002',
-<<<<<<< HEAD
     timestamp: new Date(Date.now() - 45 * 60000).toISOString(),
     userId: 'usr_admin',
     userName: 'Sarah Chowdhury',
-=======
-    timestamp: new Date(Date.now() - 3600000).toISOString(),
-    userId: 'usr_admin',
-    userName: 'Sarah Jenkins',
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
     userRole: 'super_admin',
     companyId: 'comp_01',
     action: 'UPDATED_RECORD',
     entityType: 'ComplianceRecord',
     entityId: 'rec_105',
-<<<<<<< HEAD
     details: 'Updated renewal cost estimate from ৳8,000 to ৳9,500 BDT.',
-=======
-    details: 'Updated renewal cost estimate from $8,000 to $9,500.',
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
     ipAddress: '10.0.4.12',
     status: 'success'
   },
   {
     id: 'audit_1003',
-<<<<<<< HEAD
     timestamp: new Date(Date.now() - 120 * 60000).toISOString(),
     userId: 'usr_company_admin',
     userName: 'Rahim Chowdhury',
-=======
-    timestamp: new Date(Date.now() - 14400000).toISOString(),
-    userId: 'usr_company_admin',
-    userName: 'David Chen',
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
     userRole: 'company_admin',
     companyId: 'comp_02',
     action: 'DOCUMENT_UPLOAD',
@@ -219,15 +180,9 @@ let auditLogs: AuditLog[] = [
   },
   {
     id: 'audit_1004',
-<<<<<<< HEAD
     timestamp: new Date(Date.now() - 360 * 60000).toISOString(),
     userId: 'usr_auditor',
     userName: 'Adrita Chakraborty',
-=======
-    timestamp: new Date(Date.now() - 86400000).toISOString(),
-    userId: 'usr_auditor',
-    userName: 'Elena Rostova',
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
     userRole: 'auditor',
     companyId: 'comp_02',
     action: 'EXPORTED_REPORT',
@@ -760,7 +715,6 @@ export const DbStore = {
     };
   },
 
-<<<<<<< HEAD
   getDashboardOverview: (companyIdFilter?: string) => {
     const records = DbStore.getRecords(companyIdFilter);
     const now = new Date();
@@ -955,14 +909,6 @@ export const DbStore = {
       list = list.filter(a => a.companyId === companyId);
     }
     return list.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-=======
-  // Audit Logs
-  getAuditLogs: (companyId?: string) => {
-    if (companyId && companyId !== 'all') {
-      return auditLogs.filter(a => a.companyId === companyId);
-    }
-    return auditLogs;
->>>>>>> 88d39ffe5a1d263a44646edc6eaf3743884720d2
   },
   getAuditLogsFiltered: (params?: {
     companyId?: string;
