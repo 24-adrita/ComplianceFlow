@@ -22,9 +22,9 @@ export const ForbiddenView: React.FC<ForbiddenViewProps> = ({
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center p-4 sm:p-6 font-sans">
-      <div className="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 sm:p-8 shadow-lg text-center space-y-6">
+      <div className="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 sm:p-8 shadow-lg text-center space-y-6">
         {/* Shield Icon Header */}
-        <div className="mx-auto w-16 h-16 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900/60 flex items-center justify-center text-rose-600 dark:text-rose-400 shadow-sm">
+        <div className="mx-auto w-16 h-16 rounded-lg bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900/60 flex items-center justify-center text-rose-600 dark:text-rose-400 shadow-sm">
           <ShieldAlert className="w-8 h-8" />
         </div>
 
@@ -39,7 +39,7 @@ export const ForbiddenView: React.FC<ForbiddenViewProps> = ({
         </div>
 
         {/* Role Comparison Badge Card */}
-        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80 grid grid-cols-2 gap-3 text-xs text-left">
+        <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80 grid grid-cols-2 gap-3 text-xs text-left">
           <div className="space-y-1">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
               Your Current Role

@@ -46,7 +46,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
               ? `${textareaId}-helper`
               : undefined
           }
-          className={`w-full rounded-xl text-xs sm:text-sm bg-white dark:bg-slate-900 border text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 shadow-2xs transition-all duration-150 focus:outline-none focus-visible:ring-2 disabled:bg-slate-50 dark:disabled:bg-slate-800/60 disabled:text-slate-400 disabled:cursor-not-allowed px-3.5 py-2.5 ${
+          className={`w-full rounded-lg text-xs sm:text-sm bg-white dark:bg-slate-900 border text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 shadow-2xs transition-all duration-150 focus:outline-none focus-visible:ring-2 disabled:bg-slate-50 dark:disabled:bg-slate-800/60 disabled:text-slate-400 disabled:cursor-not-allowed px-3.5 py-2.5 ${
             errorMessage
               ? 'border-rose-500/80 dark:border-rose-500/80 focus:border-rose-500 focus-visible:ring-rose-500/30 bg-rose-50/10'
               : successMessage

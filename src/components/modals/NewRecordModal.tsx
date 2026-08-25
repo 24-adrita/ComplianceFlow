@@ -35,82 +35,74 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
   ];
 
   const [formData, setFormData] = useState({
-    title: '',
-    code: '',
+    documentName: '',
+    licenseNumber: '',
     companyId: companies[0]?.id || 'comp_01',
     category: 'Corporate & Legal' as ComplianceCategory,
     issuingAuthority: '',
     issueDate: new Date().toISOString().split('T')[0],
     expiryDate: new Date(Date.now() + 365 * 86400000).toISOString().split('T')[0],
-    renewalFrequencyDays: 365,
-    riskLevel: 'medium' as RiskLevel,
-    estimatedCost: 5000,
-    assignedUserId: currentUser?.id || 'usr_compliance',
+    renewalFrequency: 'ANNUAL',
+    priority: 'medium' as RiskLevel,
     notes: '',
-    tagsStr: 'Compliance, Permit',
-    documentUrl: ''
+    autoRenewalEnabled: false,
+    departmentId: typeof currentUser?.departmentId === 'string' ? currentUser.departmentId : (currentUser?.departmentId?.id || '60c72b2f9b1d8b001c8e4a2a'),
+    responsiblePersonId: currentUser?.id || '',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadedFileName, setUploadedFileName] = useState<string>('');
 
   useEffect(() => {
     if (editingRecord) {
       setFormData({
-        title: editingRecord.title,
-        code: editingRecord.code,
+        documentName: editingRecord.title || '',
+        licenseNumber: editingRecord.code || '',
         companyId: editingRecord.companyId,
         category: editingRecord.category,
         issuingAuthority: editingRecord.issuingAuthority,
-        issueDate: editingRecord.issueDate,
-        expiryDate: editingRecord.expiryDate,
-        renewalFrequencyDays: editingRecord.renewalFrequencyDays,
-        riskLevel: editingRecord.riskLevel,
-        estimatedCost: editingRecord.estimatedCost,
-        assignedUserId: editingRecord.assignedUserId,
+        issueDate: editingRecord.issueDate?.split('T')[0] || new Date().toISOString().split('T')[0],
+        expiryDate: editingRecord.expiryDate?.split('T')[0] || new Date().toISOString().split('T')[0],
+        renewalFrequency: 'ANNUAL',
+        priority: editingRecord.riskLevel || 'medium',
         notes: editingRecord.notes || '',
-        tagsStr: (editingRecord.tags || []).join(', '),
-        documentUrl: editingRecord.documentUrl || ''
+        autoRenewalEnabled: editingRecord.autoRenewal || false,
+        departmentId: typeof currentUser?.departmentId === 'string' ? currentUser.departmentId : (currentUser?.departmentId?.id || '60c72b2f9b1d8b001c8e4a2a'),
+        responsiblePersonId: editingRecord.assignedUserId || currentUser?.id || '',
       });
       if (editingRecord.documentUrl) {
         setUploadedFileName(editingRecord.documentUrl.split('/').pop() || 'attached_document.pdf');
       } else {
         setUploadedFileName('');
+        setSelectedFile(null);
       }
     } else {
       setFormData({
-        title: '',
-        code: 'COMP-' + Math.floor(100000 + Math.random() * 900000),
+        documentName: '',
+        licenseNumber: 'COMP-' + Math.floor(100000 + Math.random() * 900000),
         companyId: companies[0]?.id || 'comp_01',
         category: 'Corporate & Legal',
         issuingAuthority: '',
         issueDate: new Date().toISOString().split('T')[0],
         expiryDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
-        renewalFrequencyDays: 365,
-        riskLevel: 'medium',
-        estimatedCost: 5000,
-        assignedUserId: currentUser?.id || 'usr_compliance',
+        renewalFrequency: 'ANNUAL',
+        priority: 'medium',
         notes: '',
-        tagsStr: 'Compliance, Permit',
-        documentUrl: ''
+        autoRenewalEnabled: false,
+        departmentId: typeof currentUser?.departmentId === 'string' ? currentUser.departmentId : (currentUser?.departmentId?.id || '60c72b2f9b1d8b001c8e4a2a'),
+        responsiblePersonId: currentUser?.id || '',
       });
       setUploadedFileName('');
+      setSelectedFile(null);
     }
   }, [editingRecord, isOpen, companies, currentUser]);
 
   const handleFileUpload = (file: File) => {
     if (!file) return;
-    setIsUploading(true);
+    setSelectedFile(file);
     setUploadedFileName(file.name);
-    setTimeout(() => {
-      setFormData((prev) => ({
-        ...prev,
-        documentUrl: `https://res.cloudinary.com/demo/image/upload/v12345678/${file.name}`
-      }));
-      setIsUploading(false);
-      toast.success(`Attached ${file.name}`);
-    }, 1000);
+    toast.success(`Attached ${file.name} (Will upload on save)`);
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -124,31 +116,35 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const tags = formData.tagsStr.split(',').map(t => t.trim()).filter(Boolean);
-      const payload = {
-        title: formData.title,
-        code: formData.code,
-        companyId: formData.companyId,
-        category: formData.category,
-        issuingAuthority: formData.issuingAuthority,
-        issueDate: formData.issueDate,
-        expiryDate: formData.expiryDate,
-        renewalFrequencyDays: Number(formData.renewalFrequencyDays),
-        riskLevel: formData.riskLevel,
-        estimatedCost: Number(formData.estimatedCost),
-        assignedUserId: formData.assignedUserId,
-        notes: formData.notes,
-        tags,
-        documentUrl: formData.documentUrl
-      };
+      const payload = new FormData();
+      payload.append('documentName', formData.documentName);
+      payload.append('licenseNumber', formData.licenseNumber);
+      payload.append('companyId', formData.companyId);
+      payload.append('departmentId', formData.departmentId);
+      payload.append('category', formData.category);
+      payload.append('issuingAuthority', formData.issuingAuthority);
+      payload.append('issueDate', formData.issueDate);
+      payload.append('expiryDate', formData.expiryDate);
+      payload.append('renewalFrequency', formData.renewalFrequency.toUpperCase());
+      payload.append('priority', formData.priority.toUpperCase());
+      
+      if (formData.responsiblePersonId) {
+        payload.append('responsiblePersonId', formData.responsiblePersonId);
+      }
+      if (formData.notes) {
+        payload.append('notes', formData.notes);
+      }
+      payload.append('autoRenewalEnabled', String(formData.autoRenewalEnabled));
 
-      const defaultUser = currentUser || ({ id: 'usr_admin', name: 'Admin', role: 'ADMIN', email: 'admin@compliance.com', companyId: 'comp_01', companyName: 'Acme', department: 'Compliance', status: 'ACTIVE' } as unknown as User);
+      if (selectedFile) {
+        payload.append('file', selectedFile);
+      }
 
       if (editingRecord) {
-        await ApiService.updateComplianceRecord(editingRecord.id, payload, defaultUser);
+        await ApiService.updateComplianceRecord(editingRecord.id, payload);
         toast.success('Compliance record updated');
       } else {
-        await ApiService.createComplianceRecord(payload, defaultUser);
+        await ApiService.createComplianceRecord(payload);
         toast.success('New compliance record created');
       }
       onSuccess();
@@ -178,8 +174,8 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
               type="text"
               required
               placeholder="e.g. Trade License Renewal 2026"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              value={formData.documentName}
+              onChange={(e) => setFormData({ ...formData, documentName: e.target.value })}
               className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100"
             />
           </div>
@@ -191,8 +187,8 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
             <input
               type="text"
               required
-              value={formData.code}
-              onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+              value={formData.licenseNumber}
+              onChange={(e) => setFormData({ ...formData, licenseNumber: e.target.value })}
               className="w-full px-3 py-2 text-xs font-mono bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100"
             />
           </div>
@@ -275,8 +271,8 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
               Risk Level *
             </label>
             <select
-              value={formData.riskLevel}
-              onChange={(e) => setFormData({ ...formData, riskLevel: e.target.value as RiskLevel })}
+              value={formData.priority}
+              onChange={(e) => setFormData({ ...formData, priority: e.target.value as RiskLevel })}
               className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100"
             >
               <option value="low">Low Risk</option>
@@ -287,30 +283,21 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Estimated Renewal Cost (BDT)
+              Renewal Frequency
             </label>
-            <input
-              type="number"
-              value={formData.estimatedCost}
-              onChange={(e) => setFormData({ ...formData, estimatedCost: Number(e.target.value) })}
+            <select
+              value={formData.renewalFrequency}
+              onChange={(e) => setFormData({ ...formData, renewalFrequency: e.target.value })}
               className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Search Tags (comma separated)
-            </label>
-            <input
-              type="text"
-              placeholder="Trade License, City Corp, Annual"
-              value={formData.tagsStr}
-              onChange={(e) => setFormData({ ...formData, tagsStr: e.target.value })}
-              className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100"
-            />
+            >
+              <option value="ANNUAL">Annual</option>
+              <option value="BIANNUAL">Bi-Annual</option>
+              <option value="QUARTERLY">Quarterly</option>
+              <option value="MONTHLY">Monthly</option>
+            </select>
           </div>
         </div>
 
@@ -336,7 +323,7 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
           <div
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDrop}
-            className="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 rounded-xl p-4 text-center bg-slate-50 dark:bg-slate-800/50 transition cursor-pointer relative"
+            className="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 rounded-lg p-4 text-center bg-slate-50 dark:bg-slate-800/50 transition cursor-pointer relative"
           >
             <input
               type="file"
@@ -345,12 +332,7 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
             
-            {isUploading ? (
-              <div className="flex flex-col items-center justify-center space-y-1 text-blue-500">
-                <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                <span className="text-xs font-bold">Uploading to Cloudinary Proxy...</span>
-              </div>
-            ) : formData.documentUrl ? (
+            {uploadedFileName ? (
               <div className="flex items-center justify-between bg-slate-100 dark:bg-slate-800 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700">
                 <div className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
@@ -360,7 +342,7 @@ export const NewRecordModal: React.FC<NewRecordModalProps> = ({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setFormData((prev) => ({ ...prev, documentUrl: '' }));
+                    setSelectedFile(null);
                     setUploadedFileName('');
                   }}
                   className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-rose-500"

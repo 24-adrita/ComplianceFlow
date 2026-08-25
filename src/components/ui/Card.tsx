@@ -8,7 +8,7 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export const Card = memo(React.forwardRef<HTMLDivElement, CardProps>(
   ({ children, variant = 'default', animated = true, className = '', ...props }, ref) => {
-    const baseStyles = 'rounded-xl transition-all duration-200';
+    const baseStyles = 'rounded-lg transition-all duration-200';
     const variants = {
       default:
         'bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-2xs hover:shadow-sm hover:border-slate-300 dark:hover:border-slate-700',

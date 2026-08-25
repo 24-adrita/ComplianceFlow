@@ -55,7 +55,7 @@ export default function LoginPage({
 
             {/* Structured Feature Cards */}
             <div className="space-y-3 pt-2">
-              <div className="flex items-start gap-3.5 p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
+              <div className="flex items-start gap-3.5 p-3.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
                 <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 shrink-0">
                   <FileCheck className="w-4 h-4" />
                 </div>
@@ -67,7 +67,7 @@ export default function LoginPage({
                 </div>
               </div>
 
-              <div className="flex items-start gap-3.5 p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
+              <div className="flex items-start gap-3.5 p-3.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
                 <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 shrink-0">
                   <CalendarClock className="w-4 h-4" />
                 </div>
@@ -79,7 +79,7 @@ export default function LoginPage({
                 </div>
               </div>
 
-              <div className="flex items-start gap-3.5 p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
+              <div className="flex items-start gap-3.5 p-3.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
                 <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 shrink-0">
                   <Building2 className="w-4 h-4" />
                 </div>
@@ -100,7 +100,7 @@ export default function LoginPage({
 
           {/* Right Side - Form Card */}
           <div className="lg:col-span-6 flex justify-center lg:justify-end">
-            <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xs">
+            <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-lg p-6 sm:p-8 shadow-xs">
               <div className="mb-6 space-y-1">
                 <h2 className="text-xl font-semibold text-slate-900 dark:text-white tracking-tight font-display">
                   Sign In to ComplianceFlow

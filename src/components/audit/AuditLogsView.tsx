@@ -41,9 +41,9 @@ export default function AuditLogsView() {
   return (
     <div className="space-y-6 text-slate-100 pb-12">
       {/* Header Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 border border-slate-800 rounded-lg p-6 shadow-xl">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-blue-500/10 border border-blue-500/20 rounded-xl text-blue-400">
+          <div className="p-2.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-400">
             <History className="w-6 h-6" />
           </div>
           <div>
@@ -56,7 +56,7 @@ export default function AuditLogsView() {
       </div>
 
       {/* Search Bar */}
-      <div className="flex items-center justify-between gap-4 bg-slate-900 p-4 rounded-2xl border border-slate-800">
+      <div className="flex items-center justify-between gap-4 bg-slate-900 p-4 rounded-lg border border-slate-800">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
           <input
@@ -64,7 +64,7 @@ export default function AuditLogsView() {
             placeholder="Search audit details or user..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+            className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
           />
         </div>
 
@@ -74,7 +74,7 @@ export default function AuditLogsView() {
       </div>
 
       {/* Logs Timeline Table */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+      <div className="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden shadow-xl">
         {loading ? (
           <div className="p-8 text-center text-slate-400 text-xs">Loading audit logs...</div>
         ) : (
@@ -102,7 +102,68 @@ export default function AuditLogsView() {
                     <User className="w-3.5 h-3.5 text-slate-400" />
                     <span>{log.userName || 'System Auto'}</span>
                   </td>
-                  <td className="px-5 py-3.5 text-slate-300">{log.details || 'No additional details logged.'}</td>
+                  <td className="px-5 py-3.5">
+                    {(() => {
+                      let parsedDetails = null;
+                      if (log.details && typeof log.details === 'string') {
+                        try {
+                          parsedDetails = JSON.parse(log.details);
+                        } catch (e) {
+                          // Not valid JSON
+                        }
+                      } else if (log.details && typeof log.details === 'object') {
+                        parsedDetails = log.details;
+                      }
+
+                      if (parsedDetails) {
+                        const actionUpper = log.action.toUpperCase();
+                        if (actionUpper === 'LOGIN' || actionUpper === 'LOGOUT') {
+                          return (
+                            <div className="flex flex-col gap-1">
+                              <span className="text-[10px] text-slate-400 font-mono">
+                                IP: {parsedDetails.ip || log.ipAddress || 'Unknown'}
+                              </span>
+                              {parsedDetails.userAgent && (
+                                <span className="text-[9px] text-slate-500 truncate max-w-[200px]" title={parsedDetails.userAgent}>
+                                  {parsedDetails.userAgent}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        }
+                        if (parsedDetails.documentName || parsedDetails.title) {
+                          return (
+                            <div className="flex flex-col gap-1">
+                              <span className="text-[11px] font-semibold text-slate-200">
+                                {parsedDetails.documentName || parsedDetails.title}
+                              </span>
+                              {(parsedDetails.code || parsedDetails.notes) && (
+                                <span className="text-[10px] text-slate-400">
+                                  {parsedDetails.code && <strong className="font-mono text-blue-400 mr-2">{parsedDetails.code}</strong>}
+                                  {parsedDetails.notes}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        }
+                        // Generic JSON rendering as small chips
+                        return (
+                          <div className="flex flex-wrap gap-1">
+                            {Object.entries(parsedDetails).map(([k, v]) => {
+                              if (typeof v === 'object' || k === 'userAgent') return null;
+                              return (
+                                <span key={k} className="px-1.5 py-0.5 rounded text-[9px] bg-slate-800 text-slate-300 border border-slate-700">
+                                  <span className="text-slate-500 font-semibold">{k}:</span> {String(v)}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        );
+                      }
+                      
+                      return <span className="text-slate-300">{log.details || 'No additional details logged.'}</span>;
+                    })()}
+                  </td>
                 </tr>
               ))}
             </tbody>

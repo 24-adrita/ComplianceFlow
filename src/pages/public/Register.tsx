@@ -53,7 +53,7 @@ export default function RegisterPage({
 
             {/* Feature Cards */}
             <div className="space-y-3 pt-2">
-              <div className="flex items-start gap-3.5 p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
+              <div className="flex items-start gap-3.5 p-3.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
                 <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 shrink-0">
                   <Users className="w-4 h-4" />
                 </div>
@@ -65,7 +65,7 @@ export default function RegisterPage({
                 </div>
               </div>
 
-              <div className="flex items-start gap-3.5 p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
+              <div className="flex items-start gap-3.5 p-3.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
                 <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 shrink-0">
                   <Shield className="w-4 h-4" />
                 </div>
@@ -77,7 +77,7 @@ export default function RegisterPage({
                 </div>
               </div>
 
-              <div className="flex items-start gap-3.5 p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
+              <div className="flex items-start gap-3.5 p-3.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
                 <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 shrink-0">
                   <Layers className="w-4 h-4" />
                 </div>
@@ -98,7 +98,7 @@ export default function RegisterPage({
 
           {/* Right Side - Registration Form Card */}
           <div className="lg:col-span-7 flex justify-center lg:justify-end">
-            <div className="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xs">
+            <div className="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-lg p-6 sm:p-8 shadow-xs">
               <div className="mb-6 space-y-1">
                 <h2 className="text-xl font-semibold text-slate-900 dark:text-white tracking-tight font-display">
                   Get Started with ComplianceFlow

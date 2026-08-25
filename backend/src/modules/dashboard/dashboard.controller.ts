@@ -66,6 +66,47 @@ export class DashboardController {
       next(error);
     }
   }
+
+  /**
+   * GET /api/v1/dashboard/metrics
+   * Provides aggregate metrics for the Workspace layout
+   */
+  static async getMetrics(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const companyId = req.query.companyId as string | undefined;
+      const departmentId = req.query.departmentId as string | undefined;
+
+      const dashboardData = await DashboardService.getOverview(
+        req.user!,
+        companyId,
+        departmentId
+      );
+
+      const metrics = {
+        totalRecords: dashboardData.cards.totalDocuments,
+        compliantCount: dashboardData.cards.activeDocuments,
+        warningCount: dashboardData.cards.expiringSoonDocuments,
+        expiredCount: dashboardData.cards.expiredDocuments,
+        inProgressCount: dashboardData.cards.pendingRenewals,
+        overallComplianceScore: dashboardData.healthSummary.score,
+        expiringIn30Days: dashboardData.expiryForecast.next30Days,
+        expiringIn60Days: dashboardData.expiryForecast.next60Days,
+        expiringIn90Days: dashboardData.expiryForecast.next90Days,
+        totalEstimatedRenewalCost: 0,
+      };
+
+      res.status(200).json({
+        success: true,
+        metrics,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export default DashboardController;

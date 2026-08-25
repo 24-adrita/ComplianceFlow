@@ -7,11 +7,14 @@ import { ZodType, ZodError } from 'zod';
 export const validateRequest = (schema: ZodType<unknown>) => {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      await schema.parseAsync({
+      const validatedData = await schema.parseAsync({
         body: req.body,
         query: req.query,
         params: req.params,
       });
+      req.body = validatedData.body;
+      req.query = validatedData.query as any;
+      req.params = validatedData.params as any;
       next();
     } catch (error) {
       if (error instanceof ZodError) {
@@ -20,10 +23,12 @@ export const validateRequest = (schema: ZodType<unknown>) => {
           message: issue.message,
         }));
 
+        const errorDetails = formattedErrors.map(e => `${e.field}: ${e.message}`).join('; ');
+
         res.status(400).json({
           status: 'error',
           statusCode: 400,
-          message: 'Validation failed for incoming request data.',
+          message: `Validation failed - ${errorDetails}`,
           errors: formattedErrors,
           timestamp: new Date().toISOString(),
         });

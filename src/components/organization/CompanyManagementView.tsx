@@ -38,6 +38,8 @@ export default function CompanyManagementView() {
     country: '',
     registrationNumber: '',
   });
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [newDeptName, setNewDeptName] = useState('');
 
   const loadCompanyData = useCallback(async () => {
     setLoading(true);
@@ -53,6 +55,10 @@ export default function CompanyManagementView() {
           country: currentComp.country || 'United States',
           registrationNumber: currentComp.registrationNumber || 'REG-849201',
         });
+        
+        // Fetch departments
+        const deptsRes = await ApiService.getDepartments(currentComp.id);
+        if (deptsRes.success) setDepartments(deptsRes.departments);
       } else if (tenantCompany) {
         setCompany(tenantCompany);
         setFormData({
@@ -62,6 +68,10 @@ export default function CompanyManagementView() {
           country: tenantCompany.country || 'United States',
           registrationNumber: tenantCompany.registrationNumber || 'REG-849201',
         });
+        
+        // Fetch departments
+        const deptsRes = await ApiService.getDepartments(tenantCompany.id);
+        if (deptsRes.success) setDepartments(deptsRes.departments);
       }
     } catch (err) {
       toast.error('Failed to load company details');
@@ -97,11 +107,39 @@ export default function CompanyManagementView() {
     }
   };
 
+  const handleAddDepartment = async () => {
+    if (!newDeptName.trim() || !company) return;
+    try {
+      const res = await ApiService.createDepartment({ name: newDeptName, companyId: company.id });
+      if (res.success) {
+        toast.success('Department added');
+        setNewDeptName('');
+        const deptsRes = await ApiService.getDepartments(company.id);
+        if (deptsRes.success) setDepartments(deptsRes.departments);
+      }
+    } catch (err) {
+      toast.error('Failed to add department');
+    }
+  };
+
+  const handleDeleteDepartment = async (deptId: string) => {
+    try {
+      await ApiService.deleteDepartment(deptId);
+      toast.success('Department removed');
+      if (company) {
+        const deptsRes = await ApiService.getDepartments(company.id);
+        if (deptsRes.success) setDepartments(deptsRes.departments);
+      }
+    } catch (err) {
+      toast.error('Failed to remove department');
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-6 animate-pulse p-2">
-        <div className="h-24 bg-slate-200 dark:bg-slate-800 rounded-2xl w-full" />
-        <div className="h-64 bg-slate-200 dark:bg-slate-800 rounded-2xl w-full" />
+        <div className="h-24 bg-slate-200 dark:bg-slate-800 rounded-lg w-full" />
+        <div className="h-64 bg-slate-200 dark:bg-slate-800 rounded-lg w-full" />
       </div>
     );
   }
@@ -112,9 +150,9 @@ export default function CompanyManagementView() {
   return (
     <div className="space-y-6 pb-12">
       {/* Header Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/60 rounded-xl text-blue-600 dark:text-blue-400">
+          <div className="p-2.5 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/60 rounded-lg text-blue-600 dark:text-blue-400">
             <Building2 className="w-5 h-5" />
           </div>
           <div>
@@ -138,7 +176,7 @@ export default function CompanyManagementView() {
       </div>
 
       {/* Employee Registration Code Banner */}
-      <div className="p-5 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/30 border border-blue-200 dark:border-blue-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="p-5 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/30 border border-blue-200 dark:border-blue-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -152,7 +190,7 @@ export default function CompanyManagementView() {
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="px-3.5 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-blue-300 dark:border-blue-700 font-mono font-bold text-sm text-blue-700 dark:text-blue-300">
+          <div className="px-3.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-blue-300 dark:border-blue-700 font-mono font-bold text-sm text-blue-700 dark:text-blue-300">
             {companyCode}
           </div>
           <Button
@@ -168,7 +206,7 @@ export default function CompanyManagementView() {
 
       {/* Company Profile Details */}
       {isEditing ? (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-4">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 shadow-xs space-y-4">
           <h2 className="text-base font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3">
             Edit Company Profile
           </h2>
@@ -184,7 +222,7 @@ export default function CompanyManagementView() {
                   required
                   value={formData.name || ''}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -197,7 +235,7 @@ export default function CompanyManagementView() {
                   required
                   value={formData.code || ''}
                   onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
@@ -212,7 +250,7 @@ export default function CompanyManagementView() {
                   placeholder="e.g. Manufacturing, Healthcare, Technology"
                   value={formData.industry || ''}
                   onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -225,7 +263,7 @@ export default function CompanyManagementView() {
                   placeholder="e.g. REG-849201"
                   value={formData.registrationNumber || ''}
                   onChange={(e) => setFormData({ ...formData, registrationNumber: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
@@ -253,10 +291,10 @@ export default function CompanyManagementView() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Main Info Card */}
-          <div className="md:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-4">
+          <div className="md:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 shadow-xs space-y-4">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/60 flex items-center justify-center font-black text-blue-600 dark:text-blue-400 text-base">
+                <div className="w-12 h-12 rounded-lg bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/60 flex items-center justify-center font-black text-blue-600 dark:text-blue-400 text-base">
                   {companyCode.substring(0, 4)}
                 </div>
                 <div>
@@ -273,14 +311,14 @@ export default function CompanyManagementView() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-3 border-t border-slate-100 dark:divide-slate-800">
-              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60">
+              <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60">
                 <span className="text-[11px] text-slate-500 font-medium block mb-0.5">Industry Sector</span>
                 <span className="text-xs font-bold text-slate-900 dark:text-white">
                   {formData.industry || 'Manufacturing & Corporate'}
                 </span>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60">
+              <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60">
                 <span className="text-[11px] text-slate-500 font-medium block mb-0.5">Location / Jurisdiction</span>
                 <span className="text-xs font-bold text-slate-900 dark:text-white">
                   {formData.country || 'United States'}
@@ -290,7 +328,7 @@ export default function CompanyManagementView() {
           </div>
 
           {/* Departments Quick Summary */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 shadow-xs space-y-4">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <Briefcase className="w-4 h-4 text-blue-500" /> Company Departments
             </h3>
@@ -298,17 +336,37 @@ export default function CompanyManagementView() {
               Active operational units mapped to compliance records
             </p>
 
+            <div className="flex items-center gap-2">
+              <input 
+                type="text" 
+                value={newDeptName}
+                onChange={(e) => setNewDeptName(e.target.value)}
+                placeholder="New Department..."
+                className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <Button variant="primary" size="sm" onClick={handleAddDepartment}>Add</Button>
+            </div>
+
             <div className="space-y-2 text-xs">
-              {['Operations & Safety', 'Legal & Regulatory', 'Finance & Tax', 'Environmental Compliance'].map(
-                (dept, i) => (
+              {departments.length === 0 ? (
+                <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 text-slate-500 text-center">
+                  No departments added yet.
+                </div>
+              ) : (
+                departments.map((dept) => (
                   <div
-                    key={i}
-                    className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between"
+                    key={dept.id}
+                    className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between"
                   >
-                    <span className="font-semibold text-slate-800 dark:text-slate-200">{dept}</span>
-                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">Active</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{dept.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">Active</span>
+                      {isAdmin && (
+                        <button onClick={() => handleDeleteDepartment(dept.id)} className="text-slate-400 hover:text-rose-500 transition font-bold px-1">&times;</button>
+                      )}
+                    </div>
                   </div>
-                )
+                ))
               )}
             </div>
           </div>

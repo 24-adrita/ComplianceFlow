@@ -58,7 +58,7 @@ export const AppShell: React.FC<AppShellProps> = ({
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-              className="relative z-10 w-64 h-full bg-slate-900 shadow-2xl"
+              className="relative z-10 w-64 h-full bg-white dark:bg-slate-900 shadow-2xl"
             >
               <Sidebar
                 currentRoute={currentRoute}

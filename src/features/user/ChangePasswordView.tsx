@@ -66,7 +66,7 @@ export const ChangePasswordView: React.FC = () => {
   };
 
   return (
-    <div className="max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-2xs space-y-6">
+    <div className="max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 shadow-2xs space-y-6">
       {/* Header Info */}
       <div className="flex items-start justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
         <div>
@@ -84,7 +84,7 @@ export const ChangePasswordView: React.FC = () => {
       </div>
 
       {errorMessage && (
-        <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800/80 text-rose-800 dark:text-rose-200 text-xs flex items-start gap-2.5 font-medium">
+        <div className="p-3.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800/80 text-rose-800 dark:text-rose-200 text-xs flex items-start gap-2.5 font-medium">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
           <div className="flex-1">
             <p className="font-bold">Password Update Warning</p>
@@ -129,7 +129,7 @@ export const ChangePasswordView: React.FC = () => {
         </div>
 
         {/* Password Strength Indicator */}
-        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 space-y-2">
+        <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 space-y-2">
           <PasswordStrengthIndicator password={newPasswordValue} />
         </div>
 

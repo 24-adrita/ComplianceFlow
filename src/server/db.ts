@@ -1676,7 +1676,7 @@ export const DbStore = {
         companyId: r.companyId,
         companyName: r.companyName,
         department: dept,
-        responsiblePerson: r.assignedUserName || 'Michael Vance',
+        responsiblePerson: r.assignedUserName || 'Md. Arif Hossain',
         issueDate: r.issueDate,
         expiryDate: r.expiryDate,
         eventDate: r.expiryDate,
@@ -1705,7 +1705,7 @@ export const DbStore = {
         companyId: ren.companyId,
         companyName: ren.companyName,
         department: ren.department,
-        responsiblePerson: ren.assignedReviewerName || 'Michael Vance',
+        responsiblePerson: ren.assignedReviewerName || 'Md. Tanvir Ahmed',
         issueDate: ren.newIssueDate,
         expiryDate: ren.newExpiryDate,
         eventDate: ren.newExpiryDate,
@@ -1736,7 +1736,7 @@ export const DbStore = {
         companyId: n.companyId,
         companyName: n.companyName,
         department: 'Compliance Operations',
-        responsiblePerson: n.recipientEmail || 'Michael Vance',
+        responsiblePerson: n.recipientEmail || 'Md. Arif Hossain',
         expiryDate: eventDate,
         eventDate: eventDate,
         priority: (n.priority as any) || 'medium',
@@ -1752,52 +1752,52 @@ export const DbStore = {
     const relativeOffsetDays = [-28, -21, -14, -7, -3, -1, 0, 1, 2, 4, 7, 10, 14, 21, 28];
     const syntheticTemplates = [
       {
-        title: 'Quarterly Environmental Audit & Site Inspection',
-        document: 'ISO 14001 Environmental Audit',
-        companyId: 'comp_03',
-        companyName: 'EcoEnergy Logistics & Power',
+        title: 'Quarterly Environmental Audit & ETP Site Inspection',
+        document: 'DoE Environmental Clearance & ETP Audit',
+        companyId: 'comp_01',
+        companyName: 'Bengal Manufacturing Ltd.',
         department: 'Environmental & Health Safety',
-        responsiblePerson: 'Amara Okafor',
+        responsiblePerson: 'Md. Tanvir Ahmed',
         priority: 'high',
         status: 'active',
         source: 'audit',
         category: 'Environmental & Safety'
       },
       {
-        title: 'FDA Bi-Annual Quality Management Review',
-        document: 'FDA QSR Medical Device License',
-        companyId: 'comp_02',
-        companyName: 'BioHealth Pharma Solutions',
+        title: 'BSTI Bi-Annual Quality Assurance Standard Review',
+        document: 'BSTI Quality Certificate & License',
+        companyId: 'comp_03',
+        companyName: 'Eastern Pharmaceuticals Ltd.',
         department: 'Operations & Licensing',
-        responsiblePerson: 'David Chen',
+        responsiblePerson: 'Sadia Rahman',
         priority: 'critical',
         status: 'expiring_soon',
         source: 'compliance',
-        category: 'Healthcare & FDA'
+        category: 'Healthcare & BSTI'
       },
       {
-        title: 'Cybersecurity SOC 2 Interim Control Verification',
-        document: 'SOC 2 Type II Compliance',
-        companyId: 'comp_01',
-        companyName: 'Apex Global Technologies Ltd.',
+        title: 'DIFE Factory Safety & Worker Welfare Control Verification',
+        document: 'DIFE Factory Safety Compliance',
+        companyId: 'comp_02',
+        companyName: 'Rahman Textiles Ltd.',
         department: 'Legal & Risk Compliance',
-        responsiblePerson: 'Michael Vance',
+        responsiblePerson: 'Md. Arif Hossain',
         priority: 'medium',
         status: 'reminder',
         source: 'reminder',
-        category: 'Data Privacy & ISO'
+        category: 'Labor & Factory Safety'
       },
       {
-        title: 'License Renewal Dossier Submission Deadline',
-        document: 'Global Export Trade Permit',
+        title: 'Trade License Renewal Dossier Submission Deadline',
+        document: 'DNCC Trade License & Commercial Permit',
         companyId: 'comp_01',
-        companyName: 'Apex Global Technologies Ltd.',
+        companyName: 'Bengal Manufacturing Ltd.',
         department: 'Executive Leadership & Governance',
-        responsiblePerson: 'Sarah Jenkins',
+        responsiblePerson: 'Nusrat Jahan',
         priority: 'high',
         status: 'renewal',
         source: 'renewal',
-        category: 'Trade & Export'
+        category: 'Trade & Licensing'
       }
     ];
 

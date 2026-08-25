@@ -128,7 +128,7 @@ const RenewalRecordSchema = new Schema<IRenewalRecord>(
     },
     currency: {
       type: String,
-      default: 'USD',
+      default: 'BDT',
       uppercase: true,
       trim: true,
     },

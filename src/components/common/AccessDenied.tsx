@@ -22,10 +22,10 @@ export const AccessDenied: React.FC<AccessDeniedProps> = ({
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.2 }}
-        className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl flex flex-col items-center"
+        className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-lg p-8 shadow-2xl flex flex-col items-center"
       >
         <div className="relative mb-6">
-          <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 shadow-inner">
+          <div className="w-16 h-16 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 shadow-inner">
             <ShieldAlert className="w-8 h-8" />
           </div>
           <div className="absolute -bottom-1 -right-1 p-1 bg-slate-900 rounded-full border border-slate-800 text-rose-400">

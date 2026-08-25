@@ -152,7 +152,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onNavigateLogin, onS
   return (
     <div className="space-y-5">
       {/* Mode Switcher Tabs */}
-      <div className="grid grid-cols-2 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700/80 text-xs font-semibold">
+      <div className="grid grid-cols-2 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-lg border border-slate-200 dark:border-slate-700/80 text-xs font-semibold">
         <button
           type="button"
           onClick={() => handleModeSwitch('create')}
@@ -181,7 +181,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onNavigateLogin, onS
       </div>
 
       {/* Role explanation indicator based on selection */}
-      <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 flex items-start gap-2.5 text-xs text-slate-600 dark:text-slate-300">
+      <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 flex items-start gap-2.5 text-xs text-slate-600 dark:text-slate-300">
         {regMode === 'create' ? (
           <>
             <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
@@ -215,7 +215,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onNavigateLogin, onS
           <div>
             <Input
               label="Full Name"
-              placeholder="Jane Doe"
+              placeholder="Md. Arif Hossain"
               leftIcon={<User className="w-4 h-4 text-slate-400" />}
               error={errors.name?.message}
               {...register('name')}
@@ -225,7 +225,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onNavigateLogin, onS
             <Input
               label="Work Email"
               type="email"
-              placeholder="jane@company.com"
+              placeholder="admin@bengalmanufacturing.com.bd"
               leftIcon={<Mail className="w-4 h-4 text-slate-400" />}
               error={errors.email?.message}
               {...register('email')}
@@ -239,7 +239,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onNavigateLogin, onS
             <div>
               <Input
                 label="Company Name"
-                placeholder="e.g. Apex Global Industries"
+                placeholder="e.g. Bengal Manufacturing Ltd."
                 leftIcon={<Building2 className="w-4 h-4 text-slate-400" />}
                 error={errors.companyName?.message}
                 {...register('companyName')}
@@ -248,7 +248,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onNavigateLogin, onS
             <div>
               <Input
                 label="Company Information / Industry"
-                placeholder="e.g. Manufacturing, Retail, Technology"
+                placeholder="e.g. Manufacturing, Textiles, Pharmaceuticals"
                 leftIcon={<Building2 className="w-4 h-4 text-slate-400" />}
                 error={errors.companyInfo?.message}
                 {...register('companyInfo')}
@@ -259,7 +259,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onNavigateLogin, onS
           <div>
             <Input
               label="Company Code or Organization Name"
-              placeholder="e.g. COMP-APEX or Apex Holdings"
+              placeholder="e.g. BENGAL or Rahman Textiles"
               leftIcon={<Key className="w-4 h-4 text-slate-400" />}
               error={errors.companyCode?.message}
               {...register('companyCode')}

@@ -72,7 +72,7 @@ export const StatCard: React.FC<StatCardProps> = memo(({
         </div>
 
         {icon && (
-          <div className={`p-2.5 rounded-xl shrink-0 transition-transform group-hover:scale-110 shadow-2xs ${iconBg[variant]}`}>
+          <div className={`p-2.5 rounded-lg shrink-0 transition-transform group-hover:scale-110 shadow-2xs ${iconBg[variant]}`}>
             {icon}
           </div>
         )}

@@ -39,8 +39,8 @@ export default function QRVerificationView() {
   return (
     <div className="space-y-6 text-slate-100 pb-12 max-w-3xl mx-auto">
       {/* Header Bar */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl text-center space-y-3">
-        <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center mx-auto shadow-lg shadow-blue-900/20">
+      <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 shadow-xl text-center space-y-3">
+        <div className="w-12 h-12 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center mx-auto shadow-lg shadow-blue-900/20">
           <QrCode className="w-6 h-6" />
         </div>
         <div>
@@ -57,7 +57,7 @@ export default function QRVerificationView() {
             placeholder="Paste QR Token or Permit Code (e.g. LIC-2026-TRD-892)"
             value={qrInput}
             onChange={(e) => setQrInput(e.target.value)}
-            className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+            className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
           />
           <Button
             type="submit"
@@ -72,7 +72,7 @@ export default function QRVerificationView() {
 
       {/* Verified Record Result Display */}
       {verifiedRecord && (
-        <div className="bg-slate-900 border border-emerald-500/30 rounded-2xl p-6 shadow-2xl space-y-4">
+        <div className="bg-slate-900 border border-emerald-500/30 rounded-lg p-6 shadow-2xl space-y-4">
           <div className="flex items-center justify-between border-b border-slate-800 pb-3">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5 text-emerald-400" />

@@ -64,19 +64,19 @@ async function seedDatabase() {
     console.log('\n🏢 Step 3: Seeding Bangladeshi Corporate Entities...');
 
     const apexCompany = await CompanyModel.create({
-      name: 'Apex Apparels BD Ltd.',
-      code: 'APEXBD',
-      registrationNumber: 'REG-BD-2011-89234',
+      name: 'Bengal Manufacturing Ltd.',
+      code: 'BENGAL',
+      registrationNumber: 'REG-BD-2014-89234',
       taxId: 'TIN-849302192',
-      industry: 'Readymade Garments & Apparels',
-      contactEmail: 'info@apexapparels.com.bd',
-      contactPhone: '+88029881122',
+      industry: 'Manufacturing & Industrial Solutions',
+      contactEmail: 'contact@bengalmanufacturing.com.bd',
+      contactPhone: '+880 1712-345678',
       address: {
-        street: 'Plot 14, Sector 7, Uttara',
-        city: 'Dhaka',
+        street: 'Plot 14-16, Tongi Industrial Area',
+        city: 'Gazipur',
         state: 'Dhaka Division',
         country: 'Bangladesh',
-        zipCode: '1230',
+        zipCode: '1710',
       },
       status: CompanyStatus.ACTIVE,
       settings: {
@@ -97,19 +97,19 @@ async function seedDatabase() {
     console.log(`  ✔ Created Company: ${apexCompany.name} [ID: ${apexCompany._id}]`);
 
     const squareCompany = await CompanyModel.create({
-      name: 'Square Pharma & Healthcare',
-      code: 'SQUARE',
-      registrationNumber: 'REG-BD-1998-10492',
+      name: 'Rahman Textiles Ltd.',
+      code: 'RAHMAN',
+      registrationNumber: 'REG-BD-2011-10492',
       taxId: 'TIN-192039485',
-      industry: 'Pharmaceuticals & Healthcare',
-      contactEmail: 'info@squarepharma.com.bd',
-      contactPhone: '+88028833445',
+      industry: 'Readymade Garments & Apparels',
+      contactEmail: 'info@rahmantextiles.com.bd',
+      contactPhone: '+880 1812-456789',
       address: {
-        street: 'Square Centre, 48 Mohakhali C/A',
+        street: 'Plot 45, Sector 7, Uttara Commercial Area',
         city: 'Dhaka',
         state: 'Dhaka Division',
         country: 'Bangladesh',
-        zipCode: '1212',
+        zipCode: '1230',
       },
       status: CompanyStatus.ACTIVE,
       settings: {
@@ -133,7 +133,7 @@ async function seedDatabase() {
     console.log('\n🏬 Step 4: Seeding Organizational Departments...');
 
     const apexSafetyDept = await DepartmentModel.create({
-      name: 'Safety & EHS',
+      name: 'Environment, Health & Safety (EHS)',
       code: 'EHS',
       companyId: apexCompany._id,
       description: 'Environment, Health, Fire Safety & Factory Safety Compliance',
@@ -141,15 +141,15 @@ async function seedDatabase() {
     });
 
     const apexLegalDept = await DepartmentModel.create({
-      name: 'Legal & Regulatory',
-      code: 'LEG',
+      name: 'Legal, Tax & Regulatory Affairs',
+      code: 'LEGAL',
       companyId: apexCompany._id,
       description: 'Trade Licensing, Legal Filings & Government Regulatory Affairs',
       status: DepartmentStatus.ACTIVE,
     });
 
     const apexHrDept = await DepartmentModel.create({
-      name: 'Human Resources',
+      name: 'Human Resources & Administration',
       code: 'HR',
       companyId: apexCompany._id,
       description: 'Labor Law, Factory Labor Compliance, Staff Safety & Welfare',
@@ -158,16 +158,16 @@ async function seedDatabase() {
     console.log(`  ✔ Created 3 Departments for ${apexCompany.name}`);
 
     const squareQaDept = await DepartmentModel.create({
-      name: 'Quality Assurance',
+      name: 'Quality Assurance (QA)',
       code: 'QA',
       companyId: squareCompany._id,
-      description: 'Drug Administration, BSTI, ISO & Healthcare Quality Assurance',
+      description: 'BSTI, ISO & Export Quality Assurance Standards',
       status: DepartmentStatus.ACTIVE,
     });
 
     const squareAuditDept = await DepartmentModel.create({
-      name: 'Compliance & Audit',
-      code: 'AUD',
+      name: 'Internal Audit & Corporate Governance',
+      code: 'AUDIT',
       companyId: squareCompany._id,
       description: 'Statutory Audits, Import/Export Licensing & Internal Control',
       status: DepartmentStatus.ACTIVE,
@@ -179,40 +179,40 @@ async function seedDatabase() {
 
     const usersToSeed = [
       {
-        name: 'Tanvir Ahmed',
-        email: 'admin@complianceflow.bd',
+        name: 'Md. Arif Hossain',
+        email: 'admin@complianceflow.com.bd',
         password: DEFAULT_PASSWORD,
         role: UserRole.SUPER_ADMIN,
-        phoneNumber: '+8801711000001',
+        phoneNumber: '+880 1712-345678',
         companyId: undefined,
         departmentId: undefined,
       },
       {
         name: 'Nusrat Jahan',
-        email: 'nusrat@apexapparels.com.bd',
+        email: 'nusrat.jahan@rahmantextiles.com.bd',
         password: DEFAULT_PASSWORD,
         role: UserRole.ADMIN,
-        phoneNumber: '+8801819000002',
+        phoneNumber: '+880 1812-456789',
+        companyId: squareCompany._id,
+        departmentId: squareQaDept._id,
+      },
+      {
+        name: 'Md. Tanvir Ahmed',
+        email: 'tanvir.ahmed@bengalmanufacturing.com.bd',
+        password: DEFAULT_PASSWORD,
+        role: UserRole.MANAGER,
+        phoneNumber: '+880 1912-567890',
         companyId: apexCompany._id,
         departmentId: apexLegalDept._id,
       },
       {
-        name: 'Rafiqul Islam',
-        email: 'rafiq@apexapparels.com.bd',
+        name: 'Farzana Yasmin',
+        email: 'farzana.yasmin@rahmantextiles.com.bd',
         password: DEFAULT_PASSWORD,
         role: UserRole.MANAGER,
-        phoneNumber: '+8801912000003',
-        companyId: apexCompany._id,
-        departmentId: apexSafetyDept._id,
-      },
-      {
-        name: 'Farhana Chowdhury',
-        email: 'farhana@squarepharma.com.bd',
-        password: DEFAULT_PASSWORD,
-        role: UserRole.MANAGER,
-        phoneNumber: '+8801515000004',
+        phoneNumber: '+880 1612-334455',
         companyId: squareCompany._id,
-        departmentId: squareQaDept._id,
+        departmentId: squareAuditDept._id,
       },
     ];
 
@@ -252,12 +252,12 @@ async function seedDatabase() {
     }
 
     // Update Departments with Manager References
-    await DepartmentModel.findByIdAndUpdate(apexSafetyDept._id, {
-      managerId: seededUsers['rafiq@apexapparels.com.bd'],
+    await DepartmentModel.findByIdAndUpdate(apexLegalDept._id, {
+      managerId: seededUsers['tanvir.ahmed@bengalmanufacturing.com.bd'],
     });
 
     await DepartmentModel.findByIdAndUpdate(squareQaDept._id, {
-      managerId: seededUsers['farhana@squarepharma.com.bd'],
+      managerId: seededUsers['nusrat.jahan@rahmantextiles.com.bd'],
     });
 
     // 6. Seed Realistic Bangladeshi Compliance Records
@@ -272,7 +272,7 @@ async function seedDatabase() {
         category: ComplianceCategory.LEGAL,
         companyId: apexCompany._id,
         departmentId: apexLegalDept._id,
-        responsiblePersonId: seededUsers['nusrat@apexapparels.com.bd'],
+        responsiblePersonId: seededUsers['tanvir.ahmed@bengalmanufacturing.com.bd'],
         issuingAuthority: 'Dhaka North City Corporation (DNCC)',
         issueDate: new Date(now.getTime() - 364 * ONE_DAY_MS),
         expiryDate: new Date(now.getTime() + 1 * ONE_DAY_MS), // 1 day remaining
@@ -281,7 +281,7 @@ async function seedDatabase() {
         status: ComplianceStatus.EXPIRING_SOON,
         notes: 'Annual business trade license renewal submitted to DNCC Zonal Office 3.',
         autoRenewalEnabled: false,
-        createdBy: seededUsers['nusrat@apexapparels.com.bd'],
+        createdBy: seededUsers['tanvir.ahmed@bengalmanufacturing.com.bd'],
       },
       {
         documentName: 'Fire Safety Certificate (FSCD)',
@@ -289,7 +289,7 @@ async function seedDatabase() {
         category: ComplianceCategory.SAFETY,
         companyId: apexCompany._id,
         departmentId: apexSafetyDept._id,
-        responsiblePersonId: seededUsers['rafiq@apexapparels.com.bd'],
+        responsiblePersonId: seededUsers['tanvir.ahmed@bengalmanufacturing.com.bd'],
         issuingAuthority: 'Fire Service and Civil Defence (FSCD), Bangladesh',
         issueDate: new Date(now.getTime() - 358 * ONE_DAY_MS),
         expiryDate: new Date(now.getTime() + 7 * ONE_DAY_MS), // 7 days remaining
@@ -298,7 +298,7 @@ async function seedDatabase() {
         status: ComplianceStatus.EXPIRING_SOON,
         notes: 'Annual fire safety inspection pending scheduled audit.',
         autoRenewalEnabled: false,
-        createdBy: seededUsers['nusrat@apexapparels.com.bd'],
+        createdBy: seededUsers['tanvir.ahmed@bengalmanufacturing.com.bd'],
       },
       {
         documentName: 'Environmental Clearance Certificate (DoE)',
@@ -306,7 +306,7 @@ async function seedDatabase() {
         category: ComplianceCategory.ENVIRONMENTAL,
         companyId: apexCompany._id,
         departmentId: apexSafetyDept._id,
-        responsiblePersonId: seededUsers['rafiq@apexapparels.com.bd'],
+        responsiblePersonId: seededUsers['tanvir.ahmed@bengalmanufacturing.com.bd'],
         issuingAuthority: 'Department of Environment (DoE), Ministry of Environment',
         issueDate: new Date(now.getTime() - 350 * ONE_DAY_MS),
         expiryDate: new Date(now.getTime() + 15 * ONE_DAY_MS), // 15 days remaining
@@ -315,7 +315,7 @@ async function seedDatabase() {
         status: ComplianceStatus.EXPIRING_SOON,
         notes: 'Effluent Treatment Plant (ETP) audit report submitted for renewal.',
         autoRenewalEnabled: false,
-        createdBy: seededUsers['nusrat@apexapparels.com.bd'],
+        createdBy: seededUsers['tanvir.ahmed@bengalmanufacturing.com.bd'],
       },
       {
         documentName: 'Factory Inspection License (DIFE)',
@@ -323,7 +323,7 @@ async function seedDatabase() {
         category: ComplianceCategory.SAFETY,
         companyId: apexCompany._id,
         departmentId: apexSafetyDept._id,
-        responsiblePersonId: seededUsers['rafiq@apexapparels.com.bd'],
+        responsiblePersonId: seededUsers['tanvir.ahmed@bengalmanufacturing.com.bd'],
         issuingAuthority: 'Department of Inspection for Factories and Establishments (DIFE)',
         issueDate: new Date(now.getTime() - 335 * ONE_DAY_MS),
         expiryDate: new Date(now.getTime() + 30 * ONE_DAY_MS), // 30 days remaining
@@ -332,7 +332,7 @@ async function seedDatabase() {
         status: ComplianceStatus.EXPIRING_SOON,
         notes: 'DIFE annual factory floor and worker safety inspection report attached.',
         autoRenewalEnabled: false,
-        createdBy: seededUsers['nusrat@apexapparels.com.bd'],
+        createdBy: seededUsers['tanvir.ahmed@bengalmanufacturing.com.bd'],
       },
       {
         documentName: 'BSTI Quality Standard Certification',
@@ -340,7 +340,7 @@ async function seedDatabase() {
         category: ComplianceCategory.OPERATIONAL,
         companyId: squareCompany._id,
         departmentId: squareQaDept._id,
-        responsiblePersonId: seededUsers['farhana@squarepharma.com.bd'],
+        responsiblePersonId: seededUsers['nusrat.jahan@rahmantextiles.com.bd'],
         issuingAuthority: 'Bangladesh Standards and Testing Institution (BSTI)',
         issueDate: new Date(now.getTime() - 370 * ONE_DAY_MS),
         expiryDate: new Date(now.getTime() - 5 * ONE_DAY_MS), // 5 days ago (EXPIRED)
@@ -349,7 +349,7 @@ async function seedDatabase() {
         status: ComplianceStatus.EXPIRED,
         notes: 'Certification expired 5 days ago. Immediate renewal fee payment required.',
         autoRenewalEnabled: false,
-        createdBy: seededUsers['farhana@squarepharma.com.bd'],
+        createdBy: seededUsers['nusrat.jahan@rahmantextiles.com.bd'],
       },
       {
         documentName: 'Import Registration Certificate (IRC)',
@@ -357,16 +357,16 @@ async function seedDatabase() {
         category: ComplianceCategory.LEGAL,
         companyId: squareCompany._id,
         departmentId: squareAuditDept._id,
-        responsiblePersonId: seededUsers['farhana@squarepharma.com.bd'],
+        responsiblePersonId: seededUsers['farzana.yasmin@rahmantextiles.com.bd'],
         issuingAuthority: 'Office of the Chief Controller of Imports & Exports (CCI&E)',
         issueDate: new Date(now.getTime() - 125 * ONE_DAY_MS),
         expiryDate: new Date(now.getTime() + 240 * ONE_DAY_MS), // 8 months remaining
         renewalFrequency: RenewalFrequency.ANNUAL,
         priority: PriorityLevel.MEDIUM,
         status: ComplianceStatus.ACTIVE,
-        notes: 'Active import license for active pharmaceutical ingredients (API).',
+        notes: 'Active import registration certificate for manufacturing materials.',
         autoRenewalEnabled: true,
-        createdBy: seededUsers['farhana@squarepharma.com.bd'],
+        createdBy: seededUsers['farzana.yasmin@rahmantextiles.com.bd'],
       },
       {
         documentName: 'ISO 9001:2015 Quality Management',
@@ -374,7 +374,7 @@ async function seedDatabase() {
         category: ComplianceCategory.OPERATIONAL,
         companyId: squareCompany._id,
         departmentId: squareAuditDept._id,
-        responsiblePersonId: seededUsers['farhana@squarepharma.com.bd'],
+        responsiblePersonId: seededUsers['farzana.yasmin@rahmantextiles.com.bd'],
         issuingAuthority: 'SGS Bangladesh Limited (ISO Registrar)',
         issueDate: new Date(now.getTime() - 180 * ONE_DAY_MS),
         expiryDate: new Date(now.getTime() + 365 * ONE_DAY_MS), // 12 months remaining
@@ -383,7 +383,7 @@ async function seedDatabase() {
         status: ComplianceStatus.ACTIVE,
         notes: 'Valid international quality management certification.',
         autoRenewalEnabled: true,
-        createdBy: seededUsers['farhana@squarepharma.com.bd'],
+        createdBy: seededUsers['farzana.yasmin@rahmantextiles.com.bd'],
       },
     ];
 
@@ -395,8 +395,8 @@ async function seedDatabase() {
     // 7. Seed Initial Audit Logs
     console.log('\n📋 Step 7: Seeding System Initial Audit Logs...');
     await AuditLogModel.create({
-      userId: seededUsers['admin@complianceflow.bd'],
-      userEmail: 'admin@complianceflow.bd',
+      userId: seededUsers['admin@complianceflow.com.bd'],
+      userEmail: 'admin@complianceflow.com.bd',
       userRole: UserRole.SUPER_ADMIN,
       action: AuditAction.CREATE,
       entity: AuditEntity.SYSTEM,

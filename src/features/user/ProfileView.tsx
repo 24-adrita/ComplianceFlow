@@ -42,7 +42,7 @@ export const ProfileView: React.FC = () => {
   const onSaveProfile = async (data: ProfileFormData) => {
     try {
       if (activeUser?.id) {
-        await apiClient.put(`/users/${activeUser.id}`, data);
+        await apiClient.patch(`/users/${activeUser.id}`, data);
       }
       toast.success('Profile updated successfully!');
       if (refreshProfile) await refreshProfile();
@@ -60,9 +60,9 @@ export const ProfileView: React.FC = () => {
   return (
     <div className="space-y-6 pb-12">
       {/* Top Header Card: Simple Human User Icon */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0">
+          <div className="w-14 h-14 rounded-lg bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0">
             <User className="w-7 h-7" />
           </div>
           <div>
@@ -78,7 +78,7 @@ export const ProfileView: React.FC = () => {
         </div>
 
         {/* Tab Toggle Navigation */}
-        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold">
+        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold">
           <button
             onClick={() => setActiveTab('details')}
             className={`px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
@@ -115,7 +115,7 @@ export const ProfileView: React.FC = () => {
       {/* Tab Content 1: Overview */}
       {activeTab === 'details' && (
         <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 shadow-xs space-y-4">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
               <User className="w-4 h-4 text-blue-500" /> Account Information
             </h3>
@@ -151,12 +151,12 @@ export const ProfileView: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 shadow-xs space-y-4">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
               <Shield className="w-4 h-4 text-blue-500" /> Role & Permissions
             </h3>
             <div className="space-y-3 text-xs text-slate-600 dark:text-slate-300">
-              <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/60 space-y-1.5">
+              <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700/60 space-y-1.5">
                 <p className="font-bold text-slate-900 dark:text-slate-100">Role: {roleLabel}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                   {isAdmin
@@ -181,7 +181,7 @@ export const ProfileView: React.FC = () => {
 
       {/* Tab Content 2: Edit Profile Form */}
       {activeTab === 'edit' && (
-        <div className="max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-4">
+        <div className="max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 shadow-xs space-y-4">
           <h3 className="text-sm font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3">
             Update Profile Information
           </h3>

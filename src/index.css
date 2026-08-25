@@ -1,15 +1,17 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark *));
+
 @layer base {
   body {
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background-color: #f8fafc;
-    color: #0f172a;
+    background-color: #f8fafc; /* slate-50 */
+    color: #0f172a; /* slate-900 */
   }
   
   .dark body {
-    background-color: #0b0f17;
-    color: #f8fafc;
+    background-color: #020617; /* slate-950 */
+    color: #f8fafc; /* slate-50 */
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -67,13 +69,14 @@
 
 /* Clean panel styling */
 .panel-card {
-  background: #ffffff;
-  border: 1px solid rgba(226, 232, 240, 0.85);
+  background: #ffffff; /* white */
+  border: 1px solid #e2e8f0; /* slate-200 */
+  border-radius: 0.5rem; /* rounded-lg (8px) */
   box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
 }
 
 .dark .panel-card {
-  background: #0f172a;
-  border: 1px solid rgba(30, 41, 59, 0.85);
+  background: #0f172a; /* slate-900 */
+  border: 1px solid #1e293b; /* slate-800 */
   box-shadow: none;
 }

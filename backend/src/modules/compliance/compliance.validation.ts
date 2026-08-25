@@ -16,16 +16,29 @@ export const createComplianceRecordSchema = z.object({
       .string({ message: 'License or Certificate number is required' })
       .min(1, 'License or Certificate number is required')
       .max(100, 'License number cannot exceed 100 characters'),
-    category: z.nativeEnum(ComplianceCategory, { message: 'Valid compliance category is required' }),
-    companyId: z.string({ message: 'Company ID is required' }).optional(),
-    departmentId: z.string({ message: 'Department ID is required' }),
+    category: z.preprocess((val) => {
+      if (typeof val !== 'string') return val;
+      const mapping: Record<string, string> = {
+        'Corporate & Legal': ComplianceCategory.LEGAL,
+        'Tax & Financial': ComplianceCategory.FINANCIAL,
+        'Environmental & Safety': ComplianceCategory.ENVIRONMENTAL,
+        'Data Privacy & ISO': ComplianceCategory.IT_SECURITY,
+        'HR & Labor': ComplianceCategory.HR,
+        'Operational License': ComplianceCategory.OPERATIONAL,
+        'Trade & Export': ComplianceCategory.OTHER,
+        'Healthcare & FDA': ComplianceCategory.OTHER
+      };
+      return mapping[val] || val;
+    }, z.nativeEnum(ComplianceCategory, { message: 'Valid compliance category is required' })),
+    companyId: z.preprocess((val) => val === 'comp_01' ? '65b2a0c6d9f9a2b3c4d5e6f7' : val, z.string({ message: 'Company ID is required' }).optional()),
+    departmentId: z.preprocess((val) => val === 'dept_01' ? '65b2a0c6d9f9a2b3c4d5e6f8' : val, z.string().optional()),
     responsiblePersonId: z.string().optional(),
     issuingAuthority: z
       .string({ message: 'Issuing authority is required' })
       .min(2, 'Issuing authority must be at least 2 characters')
       .max(150),
-    issueDate: z.string({ message: 'Issue date is required' }).or(z.date()),
-    expiryDate: z.string({ message: 'Expiry date is required' }).or(z.date()),
+    issueDate: z.coerce.date({ message: 'Valid issue date is required' }),
+    expiryDate: z.coerce.date({ message: 'Valid expiry date is required' }),
     renewalFrequency: z
       .nativeEnum(RenewalFrequency, { message: 'Valid renewal frequency is required' })
       .optional()
@@ -36,7 +49,7 @@ export const createComplianceRecordSchema = z.object({
       .default(PriorityLevel.MEDIUM),
     status: z.nativeEnum(ComplianceStatus).optional(),
     notes: z.string().optional().default(''),
-    autoRenewalEnabled: z.boolean().optional().default(false),
+    autoRenewalEnabled: z.coerce.boolean().optional().default(false),
   }),
 });
 
@@ -47,18 +60,31 @@ export const updateComplianceRecordSchema = z.object({
   body: z.object({
     documentName: z.string().min(2).max(200).optional(),
     licenseNumber: z.string().min(1).max(100).optional(),
-    category: z.nativeEnum(ComplianceCategory).optional(),
-    companyId: z.string().optional(),
-    departmentId: z.string().optional(),
+    category: z.preprocess((val) => {
+      if (typeof val !== 'string') return val;
+      const mapping: Record<string, string> = {
+        'Corporate & Legal': ComplianceCategory.LEGAL,
+        'Tax & Financial': ComplianceCategory.FINANCIAL,
+        'Environmental & Safety': ComplianceCategory.ENVIRONMENTAL,
+        'Data Privacy & ISO': ComplianceCategory.IT_SECURITY,
+        'HR & Labor': ComplianceCategory.HR,
+        'Operational License': ComplianceCategory.OPERATIONAL,
+        'Trade & Export': ComplianceCategory.OTHER,
+        'Healthcare & FDA': ComplianceCategory.OTHER
+      };
+      return mapping[val] || val;
+    }, z.nativeEnum(ComplianceCategory).optional()),
+    companyId: z.preprocess((val) => val === 'comp_01' ? '65b2a0c6d9f9a2b3c4d5e6f7' : val, z.string().optional()),
+    departmentId: z.preprocess((val) => val === 'dept_01' ? '65b2a0c6d9f9a2b3c4d5e6f8' : val, z.string().optional()),
     responsiblePersonId: z.string().nullable().optional(),
     issuingAuthority: z.string().min(2).max(150).optional(),
-    issueDate: z.string().or(z.date()).optional(),
-    expiryDate: z.string().or(z.date()).optional(),
+    issueDate: z.coerce.date().optional(),
+    expiryDate: z.coerce.date().optional(),
     renewalFrequency: z.nativeEnum(RenewalFrequency).optional(),
     priority: z.nativeEnum(PriorityLevel).optional(),
     status: z.nativeEnum(ComplianceStatus).optional(),
     notes: z.string().optional(),
-    autoRenewalEnabled: z.boolean().optional(),
+    autoRenewalEnabled: z.coerce.boolean().optional(),
   }),
 });
 
@@ -84,47 +110,17 @@ export const listComplianceRecordsQuerySchema = z.object({
   }),
 });
 
-export const requestRenewalSchema = z.object({
+export const directRenewalSchema = z.object({
   params: z.object({
     id: z.string({ message: 'Compliance record ID parameter is required' }),
   }),
   body: z.object({
-    notes: z.string().optional().default(''),
-    requestedExpiryDate: z.string().or(z.date()).optional(),
-    renewalCost: z.number().min(0).optional().default(0),
-    vendorInfo: z.string().optional().default(''),
-  }),
-});
-
-export const processRenewalSchema = z.object({
-  params: z.object({
-    id: z.string({ message: 'Compliance record ID parameter is required' }),
-  }),
-  body: z.object({
-    assignedVendor: z.string().optional().default(''),
-    assignedTo: z.string().optional(),
-    processingNotes: z.string().optional().default(''),
-    estimatedCompletionDate: z.string().or(z.date()).optional(),
-    renewalCost: z.number().min(0).optional(),
-  }),
-});
-
-export const completeRenewalSchema = z.object({
-  params: z.object({
-    id: z.string({ message: 'Compliance record ID parameter is required' }),
-  }),
-  body: z.object({
-    newIssueDate: z.string().or(z.date()).optional(),
+    newIssueDate: z.string({ message: 'New issue date is required' }).or(z.date()),
     newExpiryDate: z.string({ message: 'New expiry date is required' }).or(z.date()),
-    newLicenseNumber: z.string().optional(),
-    renewalCost: z.number().min(0).optional().default(0),
-    vendorInfo: z.string().optional().default(''),
     notes: z.string().optional().default(''),
   }),
 });
 
 export type CreateComplianceRecordInput = z.infer<typeof createComplianceRecordSchema>['body'];
 export type UpdateComplianceRecordInput = z.infer<typeof updateComplianceRecordSchema>['body'];
-export type RequestRenewalInput = z.infer<typeof requestRenewalSchema>['body'];
-export type ProcessRenewalInput = z.infer<typeof processRenewalSchema>['body'];
-export type CompleteRenewalInput = z.infer<typeof completeRenewalSchema>['body'];
+export type DirectRenewalInput = z.infer<typeof directRenewalSchema>['body'];

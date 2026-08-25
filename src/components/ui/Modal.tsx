@@ -72,7 +72,7 @@ export const Modal: React.FC<ModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 12 }}
             transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-            className={`relative w-full ${maxWidths[maxWidth]} bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden z-10`}
+            className={`relative w-full ${maxWidths[maxWidth]} bg-white dark:bg-slate-900 rounded-lg shadow-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden z-10`}
           >
             {/* Header */}
             {(title || description) && (
@@ -96,7 +96,7 @@ export const Modal: React.FC<ModalProps> = ({
                   type="button"
                   onClick={onClose}
                   aria-label="Close modal dialog"
-                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 >
                   <X className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
                   <span className="sr-only">Close modal dialog</span>

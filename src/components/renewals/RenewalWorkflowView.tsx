@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'motion/react';
+import { MotionView, MotionStaggerContainer, MotionStaggerItem } from '../common/MotionView';
 import { Button } from '../ui/Button';
 import {
   RefreshCw,
@@ -18,7 +19,7 @@ import { ApiService } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { ComplianceRecord } from '../../types';
 import { StatusBadge } from '../common/StatusBadge';
-import { RenewalWorkflowModal } from '../modals/RenewalWorkflowModal';
+import { RenewDocumentModal } from '../modals/RenewDocumentModal';
 import toast from 'react-hot-toast';
 
 export default function RenewalWorkflowView() {
@@ -51,36 +52,40 @@ export default function RenewalWorkflowView() {
     loadRenewalRecords();
   }, [loadRenewalRecords]);
 
+  const safeRecords = records || [];
+
   // 4 Standard Document Statuses
   const renewalStages = [
-    { id: 'all', label: 'All Records', count: records.length },
+    { id: 'all', label: 'All Records', count: safeRecords.length },
     {
       id: 'active',
       label: 'Active',
-      count: records.filter((r) => r.status === 'compliant' || (r.status as string) === 'active').length,
+      count: safeRecords.filter((r) => r.status === 'compliant' || (r.status as string) === 'active').length,
     },
     {
       id: 'expiring',
       label: 'Expiring Soon',
-      count: records.filter((r) => r.status === 'warning' || (r.status as string) === 'expiring').length,
+      count: safeRecords.filter((r) => r.status === 'warning' || (r.status as string) === 'expiring').length,
     },
     {
       id: 'expired',
       label: 'Expired',
-      count: records.filter((r) => r.status === 'expired').length,
+      count: safeRecords.filter((r) => r.status === 'expired').length,
     },
     {
       id: 'renewed',
       label: 'Renewed',
-      count: records.filter((r) => (r.status as string) === 'renewed' || (r.notes && r.notes.includes('[Renewed on'))).length,
+      count: safeRecords.filter((r) => (r.status as string) === 'renewed' || (r.notes && r.notes.includes('[Renewed on'))).length,
     }
   ];
 
-  const filteredRecords = records.filter((r) => {
-    const matchesSearch =
-      r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.category.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredRecords = safeRecords.filter((r) => {
+    const title = (r.title || (r as any).documentName || '').toLowerCase();
+    const code = (r.code || (r as any).licenseNumber || '').toLowerCase();
+    const category = (r.category || '').toLowerCase();
+    const search = (searchQuery || '').toLowerCase();
+
+    const matchesSearch = title.includes(search) || code.includes(search) || category.includes(search);
 
     if (!matchesSearch) return false;
 
@@ -106,11 +111,11 @@ export default function RenewalWorkflowView() {
   };
 
   return (
-    <div className="space-y-6 pb-12">
+    <MotionView className="space-y-6 pb-12">
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/60 rounded-xl text-blue-600 dark:text-blue-400">
+          <div className="p-2.5 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/60 rounded-lg text-blue-600 dark:text-blue-400">
             <RefreshCw className="w-5 h-5" />
           </div>
           <div>
@@ -138,7 +143,7 @@ export default function RenewalWorkflowView() {
           <button
             key={st.id}
             onClick={() => setSelectedStage(st.id)}
-            className={`p-3.5 rounded-2xl border transition text-left cursor-pointer ${
+            className={`p-3.5 rounded-lg border transition text-left cursor-pointer ${
               selectedStage === st.id
                 ? 'bg-blue-50/50 dark:bg-blue-950/30 border-blue-500 shadow-xs'
                 : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
@@ -153,7 +158,7 @@ export default function RenewalWorkflowView() {
       </div>
 
       {/* Search & Filter Toolbar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-lg border border-slate-200 dark:border-slate-800 shadow-xs">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
           <input
@@ -161,12 +166,12 @@ export default function RenewalWorkflowView() {
             placeholder="Search by code, title, category..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
         <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-          Showing <strong className="text-slate-900 dark:text-white font-bold">{filteredRecords.length}</strong> of {records.length} records
+          Showing <strong className="text-slate-900 dark:text-white font-bold">{filteredRecords.length}</strong> of {safeRecords.length} records
         </span>
       </div>
 
@@ -174,11 +179,11 @@ export default function RenewalWorkflowView() {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-44 bg-slate-200 dark:bg-slate-800/40 rounded-2xl border border-slate-300 dark:border-slate-800 animate-pulse" />
+            <div key={i} className="h-44 bg-slate-200 dark:bg-slate-800/40 rounded-lg border border-slate-300 dark:border-slate-800 animate-pulse" />
           ))}
         </div>
       ) : filteredRecords.length === 0 ? (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center space-y-3 shadow-xs">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-12 text-center space-y-3 shadow-xs">
           <ShieldCheck className="w-12 h-12 text-slate-400 mx-auto" />
           <h3 className="text-base font-bold text-slate-900 dark:text-white">No Records Found</h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
@@ -186,39 +191,42 @@ export default function RenewalWorkflowView() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <MotionStaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredRecords.map((rec) => {
-            const isExpired = new Date(rec.expiryDate).getTime() < Date.now();
-            const daysLeft = Math.ceil((new Date(rec.expiryDate).getTime() - Date.now()) / 86400000);
+            const expMs = rec.expiryDate ? new Date(rec.expiryDate).getTime() : 0;
+            const isExpired = expMs ? expMs < Date.now() : false;
+            const daysLeft = expMs ? Math.ceil((expMs - Date.now()) / 86400000) : 0;
 
             return (
-              <div
+              <MotionStaggerItem
                 key={rec.id}
-                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4 hover:border-slate-300 dark:hover:border-slate-700 transition"
+                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs flex flex-col justify-between space-y-4 hover:border-slate-300 dark:hover:border-slate-700 hover:-translate-y-1 hover:shadow-xl transition-all duration-200"
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs text-blue-600 dark:text-blue-400 font-bold">{rec.code}</span>
+                    <span className="font-mono text-xs text-blue-600 dark:text-blue-400 font-bold">{rec.code || (rec as any).licenseNumber}</span>
                     <StatusBadge status={rec.status} />
                   </div>
 
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-2">{rec.title}</h3>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-2">{rec.title || (rec as any).documentName}</h3>
 
                   <div className="text-xs text-slate-500 dark:text-slate-400 space-y-1">
                     <div className="flex items-center gap-1.5">
                       <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                      <span className="truncate">{rec.issuingAuthority || rec.category}</span>
+                      <span className="truncate">{rec.issuingAuthority || rec.category || 'N/A'}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5 text-slate-400" />
                       <span>
                         Expiry:{' '}
                         <strong className={isExpired ? 'text-rose-600 dark:text-rose-400 font-bold' : 'text-slate-700 dark:text-slate-300'}>
-                          {rec.expiryDate}
+                          {rec.expiryDate || 'N/A'}
                         </strong>{' '}
-                        <span className="text-[10px] text-slate-400">
-                          ({isExpired ? `${Math.abs(daysLeft)}d overdue` : `${daysLeft}d remaining`})
-                        </span>
+                        {rec.expiryDate && (
+                          <span className="text-[10px] text-slate-400">
+                            ({isExpired ? `${Math.abs(daysLeft)}d overdue` : `${daysLeft}d remaining`})
+                          </span>
+                        )}
                       </span>
                     </div>
                   </div>
@@ -235,14 +243,14 @@ export default function RenewalWorkflowView() {
                     Renew Document
                   </Button>
                 </div>
-              </div>
+              </MotionStaggerItem>
             );
           })}
-        </div>
+        </MotionStaggerContainer>
       )}
 
-      {/* Renewal Modal */}
-      <RenewalWorkflowModal
+      {/* Direct Renewal Modal */}
+      <RenewDocumentModal
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
@@ -254,6 +262,6 @@ export default function RenewalWorkflowView() {
         record={selectedRecordForRenewal}
         currentUser={user}
       />
-    </div>
+    </MotionView>
   );
 }

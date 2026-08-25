@@ -19,9 +19,14 @@ export const registerSchema = z.object({
         'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
       ),
     role: z.nativeEnum(UserRole).optional().default(UserRole.EMPLOYEE),
+    // Legacy ObjectId-based fields (kept for backward compat)
     companyId: z.string().optional(),
     departmentId: z.string().optional(),
     phoneNumber: z.string().optional(),
+    // Frontend registration form fields
+    companyName: z.string().optional(),   // 'create' mode: new company name
+    companyCode: z.string().optional(),   // 'join' mode: existing company code
+    industry: z.string().optional(),      // 'create' mode: company industry/info
   }),
 });
 

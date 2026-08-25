@@ -60,11 +60,11 @@ const AddressSchema = new Schema<ICompanyAddress>(
 
 const SettingsSchema = new Schema<ICompanySettings>(
   {
-    defaultCurrency: { type: String, default: 'USD', uppercase: true, trim: true },
-    fiscalYearStartMonth: { type: Number, default: 1, min: 1, max: 12 },
+    defaultCurrency: { type: String, default: 'BDT', uppercase: true, trim: true },
+    fiscalYearStartMonth: { type: Number, default: 7, min: 1, max: 12 },
     autoArchiving: { type: Boolean, default: false },
     allowManagerApprovals: { type: Boolean, default: true },
-    timezone: { type: String, default: 'UTC' },
+    timezone: { type: String, default: 'Asia/Dhaka' },
   },
   { _id: false }
 );

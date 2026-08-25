@@ -76,7 +76,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Notifications Button */}
         <button
           onClick={onToggleNotifications}
-          className="relative p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+          className="relative p-2 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
           title="Notifications & Reminders"
         >
           <Bell className="w-4 h-4 sm:w-5 sm:h-5" />

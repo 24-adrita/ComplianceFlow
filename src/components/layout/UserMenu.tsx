@@ -53,7 +53,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onNavigateTo }) => {
         aria-expanded={isOpen}
         aria-haspopup="true"
         aria-label={`User account menu for ${activeUser.name}`}
-        className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 cursor-pointer shadow-2xs"
+        className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 cursor-pointer shadow-2xs"
       >
         {/* Simple Professional Human / User Icon */}
         <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0">
@@ -99,12 +99,12 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onNavigateTo }) => {
               role="menu"
               aria-orientation="vertical"
               aria-label="User account options"
-              className="absolute right-0 mt-2 w-60 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl py-1.5 z-50 origin-top-right overflow-hidden"
+              className="absolute right-0 mt-2 w-60 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-xl py-1.5 z-50 origin-top-right overflow-hidden"
             >
               {/* User Header */}
               <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0">
+                  <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0">
                     <User className="w-4 h-4" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -127,7 +127,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onNavigateTo }) => {
                   type="button"
                   role="menuitem"
                   onClick={() => handleSelectRoute('profile')}
-                  className="w-full text-left px-3 py-2 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl flex items-center gap-2.5 font-semibold transition-colors cursor-pointer"
+                  className="w-full text-left px-3 py-2 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg flex items-center gap-2.5 font-semibold transition-colors cursor-pointer"
                 >
                   <User className="w-4 h-4 text-slate-400" />
                   <span>Profile</span>
@@ -137,7 +137,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onNavigateTo }) => {
                   type="button"
                   role="menuitem"
                   onClick={() => handleSelectRoute('change_password')}
-                  className="w-full text-left px-3 py-2 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl flex items-center gap-2.5 font-semibold transition-colors cursor-pointer"
+                  className="w-full text-left px-3 py-2 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg flex items-center gap-2.5 font-semibold transition-colors cursor-pointer"
                 >
                   <KeyRound className="w-4 h-4 text-slate-400" />
                   <span>Change Password</span>
@@ -150,7 +150,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onNavigateTo }) => {
                   type="button"
                   role="menuitem"
                   onClick={handleLogout}
-                  className="w-full text-left px-3 py-2 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-xl flex items-center gap-2.5 font-semibold transition-colors cursor-pointer"
+                  className="w-full text-left px-3 py-2 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg flex items-center gap-2.5 font-semibold transition-colors cursor-pointer"
                 >
                   <LogOut className="w-4 h-4" />
                   <span>Logout</span>

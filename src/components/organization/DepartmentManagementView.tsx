@@ -8,7 +8,7 @@ export default function DepartmentManagementView() {
       id: 'dept-1',
       name: 'Legal, Tax & Regulatory Affairs',
       code: 'LEG-TAX',
-      head: 'Sarah Jenkins',
+      head: 'Nusrat Jahan',
       recordCount: 14,
       complianceHealth: 96,
       budget: '৳2,50,000'
@@ -45,9 +45,9 @@ export default function DepartmentManagementView() {
   return (
     <div className="space-y-6 text-slate-100 pb-12">
       {/* Header Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 border border-slate-800 rounded-lg p-6 shadow-xl">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-blue-500/10 border border-blue-500/20 rounded-xl text-blue-400">
+          <div className="p-2.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-400">
             <Users className="w-6 h-6" />
           </div>
           <div>
@@ -65,7 +65,7 @@ export default function DepartmentManagementView() {
           <motion.div
             key={dept.id}
             whileHover={{ y: -2 }}
-            className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4"
+            className="bg-slate-900 border border-slate-800 rounded-lg p-5 shadow-xl space-y-4"
           >
             <div className="flex items-start justify-between gap-2">
               <div>
@@ -81,11 +81,11 @@ export default function DepartmentManagementView() {
             </div>
 
             <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-800 text-xs">
-              <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+              <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
                 <span className="text-slate-500 font-medium">Active Permits</span>
                 <div className="text-lg font-bold text-white">{dept.recordCount} Records</div>
               </div>
-              <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+              <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
                 <span className="text-slate-500 font-medium">Allocated Budget</span>
                 <div className="text-lg font-bold text-blue-400">{dept.budget}</div>
               </div>

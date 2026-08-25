@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'motion/react';
+import { MotionView, MotionStaggerContainer, MotionStaggerItem, MotionStaggerTableRow } from '../common/MotionView';
 import { Button } from '../ui/Button';
 import {
   FileText,
@@ -36,10 +37,11 @@ import {
 } from 'recharts';
 import { ApiService } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../providers/ThemeProvider';
 import { getRoleCategory } from '../../lib/permissions';
 import { ComplianceRecord } from '../../types';
 import { NewRecordModal } from '../modals/NewRecordModal';
-import { RenewalWorkflowModal } from '../modals/RenewalWorkflowModal';
+import { RenewDocumentModal } from '../modals/RenewDocumentModal';
 import { StatusBadge } from '../common/StatusBadge';
 import { exportComplianceSummaryCSV } from '../../utils/csvExport';
 import toast from 'react-hot-toast';
@@ -52,12 +54,24 @@ const CATEGORY_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', 
 
 export default function SmartDashboardView({ onNavigate }: SmartDashboardViewProps) {
   const { user, currentUser, companies } = useAuth();
+  const { isDark } = useTheme();
   const activeUser = user || currentUser;
   const roleCategory = getRoleCategory(activeUser?.role);
   const isAdmin = roleCategory === 'admin';
 
+  // Theme-aware chart colors
+  const chartTextColor = isDark ? '#94a3b8' : '#64748b';
+  const gridColor = isDark ? '#334155' : '#e2e8f0';
+  const tooltipStyle = {
+    backgroundColor: isDark ? '#1e293b' : '#ffffff',
+    borderColor: isDark ? '#334155' : '#e2e8f0',
+    color: isDark ? '#f1f5f9' : '#0f172a',
+    borderRadius: '8px'
+  };
+
   // Data states
   const [records, setRecords] = useState<ComplianceRecord[]>([]);
+  const [overview, setOverview] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
@@ -74,10 +88,17 @@ export default function SmartDashboardView({ onNavigate }: SmartDashboardViewPro
     else setLoading(true);
 
     try {
-      const res = await ApiService.getComplianceRecords();
+      const scope = activeUser?.role === 'SUPER_ADMIN' ? undefined : activeUser?.companyId;
+      const [res, overviewRes] = await Promise.all([
+        ApiService.getComplianceRecords(),
+        ApiService.getDashboardOverview(scope)
+      ]);
 
       if (res.success && res.records) {
         setRecords(res.records);
+      }
+      if (overviewRes.success && overviewRes.data) {
+        setOverview(overviewRes.data);
       }
       if (isManualRefresh) {
         toast.success('Dashboard records refreshed');
@@ -105,20 +126,20 @@ export default function SmartDashboardView({ onNavigate }: SmartDashboardViewPro
     return records;
   }, [records, assignedOnly, activeUser]);
 
-  const totalDocs = relevantRecords.length;
-  const activeDocs = relevantRecords.filter(
+  const totalDocs = overview ? overview.cards.totalDocuments : relevantRecords.length;
+  const activeDocs = overview ? overview.cards.activeDocuments : relevantRecords.filter(
     (r) => r.status === 'compliant' || (r.status as string) === 'active'
   ).length;
-  const expiringSoonDocs = relevantRecords.filter(
+  const expiringSoonDocs = overview ? overview.cards.expiringSoonDocuments : relevantRecords.filter(
     (r) => r.status === 'warning' || (r.status as string) === 'expiring'
   ).length;
-  const expiredDocs = relevantRecords.filter((r) => r.status === 'expired').length;
-  const renewedDocs = relevantRecords.filter(
+  const expiredDocs = overview ? overview.cards.expiredDocuments : relevantRecords.filter((r) => r.status === 'expired').length;
+  const renewedDocs = overview ? overview.cards.renewedDocuments : relevantRecords.filter(
     (r) => (r.status as string) === 'renewed' || (r.notes && r.notes.includes('[Renewed on'))
   ).length;
 
   // Compliance Health Score & Status Label
-  const healthPercentage = totalDocs > 0 ? Math.round((activeDocs / totalDocs) * 100) : 100;
+  const healthPercentage = overview ? overview.healthSummary.score : (totalDocs > 0 ? Math.round((activeDocs / totalDocs) * 100) : 100);
 
   let healthStatusLabel: 'Good' | 'Moderate' | 'Critical' = 'Good';
   let healthBadgeColor = 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20';
@@ -274,24 +295,24 @@ export default function SmartDashboardView({ onNavigate }: SmartDashboardViewPro
   if (loading) {
     return (
       <div className="space-y-6 animate-pulse p-2">
-        <div className="h-20 bg-slate-200 dark:bg-slate-800 rounded-2xl w-full" />
+        <div className="h-20 bg-slate-200 dark:bg-slate-800 rounded-lg w-full" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-28 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
+            <div key={i} className="h-28 bg-slate-200 dark:bg-slate-800 rounded-lg" />
           ))}
         </div>
-        <div className="h-72 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
+        <div className="h-72 bg-slate-200 dark:bg-slate-800 rounded-lg" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 pb-12">
+    <MotionView className="space-y-6 pb-12">
       {/* 1. Header & Quick Actions */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/60 rounded-xl text-blue-600 dark:text-blue-400">
+            <div className="p-2 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/60 rounded-lg text-blue-600 dark:text-blue-400">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
@@ -363,12 +384,12 @@ export default function SmartDashboardView({ onNavigate }: SmartDashboardViewPro
       </div>
 
       {/* 2. Overview Metrics Cards (4 Cards) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <MotionStaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Documents */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs">
+        <MotionStaggerItem className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs hover:-translate-y-1 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
             <span className="text-xs font-semibold">Total Documents</span>
-            <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-700 dark:text-slate-300">
+            <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-300">
               <FileText className="w-4 h-4" />
             </div>
           </div>
@@ -376,13 +397,13 @@ export default function SmartDashboardView({ onNavigate }: SmartDashboardViewPro
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
             Registered company records
           </p>
-        </div>
+        </MotionStaggerItem>
 
         {/* Active Documents */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs">
+        <MotionStaggerItem className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs hover:-translate-y-1 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400 mb-2">
             <span className="text-xs font-semibold">Active Documents</span>
-            <div className="p-2 bg-emerald-50 dark:bg-emerald-950/60 rounded-xl text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50">
+            <div className="p-2 bg-emerald-50 dark:bg-emerald-950/60 rounded-lg text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50">
               <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
@@ -390,13 +411,13 @@ export default function SmartDashboardView({ onNavigate }: SmartDashboardViewPro
           <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1">
             Fully valid and compliant
           </p>
-        </div>
+        </MotionStaggerItem>
 
         {/* Expiring Soon */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs">
+        <MotionStaggerItem className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs hover:-translate-y-1 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between text-amber-600 dark:text-amber-400 mb-2">
             <span className="text-xs font-semibold">Expiring Soon</span>
-            <div className="p-2 bg-amber-50 dark:bg-amber-950/60 rounded-xl text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50">
+            <div className="p-2 bg-amber-50 dark:bg-amber-950/60 rounded-lg text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50">
               <Clock className="w-4 h-4" />
             </div>
           </div>
@@ -404,13 +425,13 @@ export default function SmartDashboardView({ onNavigate }: SmartDashboardViewPro
           <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1">
             Due for renewal within 30 days
           </p>
-        </div>
+        </MotionStaggerItem>
 
         {/* Expired */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs">
+        <MotionStaggerItem className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs hover:-translate-y-1 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between text-rose-600 dark:text-rose-400 mb-2">
             <span className="text-xs font-semibold">Expired</span>
-            <div className="p-2 bg-rose-50 dark:bg-rose-950/60 rounded-xl text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50">
+            <div className="p-2 bg-rose-50 dark:bg-rose-950/60 rounded-lg text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50">
               <AlertTriangle className="w-4 h-4" />
             </div>
           </div>
@@ -418,13 +439,13 @@ export default function SmartDashboardView({ onNavigate }: SmartDashboardViewPro
           <p className="text-[11px] text-rose-600 dark:text-rose-400 mt-1">
             Requires immediate renewal
           </p>
-        </div>
-      </div>
+        </MotionStaggerItem>
+      </MotionStaggerContainer>
 
       {/* 3. Compliance Health Score & Widgets Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Compliance Health Score */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-4">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-sm font-bold text-slate-900 dark:text-white">Compliance Health Score</span>
             <span className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold border uppercase tracking-wider ${healthBadgeColor}`}>
@@ -455,7 +476,7 @@ export default function SmartDashboardView({ onNavigate }: SmartDashboardViewPro
         </div>
 
         {/* High-Risk Documents Widget */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-3">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-rose-500" /> High-Risk Documents
@@ -470,7 +491,7 @@ export default function SmartDashboardView({ onNavigate }: SmartDashboardViewPro
               highRiskDocs.map((doc) => (
                 <div
                   key={doc.id}
-                  className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 text-xs"
+                  className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 text-xs"
                 >
                   <div className="truncate pr-2">
                     <p className="font-bold text-slate-900 dark:text-slate-100 truncate">{doc.title}</p>
@@ -486,7 +507,7 @@ export default function SmartDashboardView({ onNavigate }: SmartDashboardViewPro
         </div>
 
         {/* Recent Activities Widget */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-3">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <Activity className="w-4 h-4 text-blue-500" /> Recent Activities
@@ -511,7 +532,7 @@ export default function SmartDashboardView({ onNavigate }: SmartDashboardViewPro
       {/* 4. Visual Analytics Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Document Category Distribution */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-3">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-sm font-bold text-slate-900 dark:text-white">Document Categories</h2>
@@ -534,10 +555,10 @@ export default function SmartDashboardView({ onNavigate }: SmartDashboardViewPro
                   paddingAngle={3}
                 >
                   {categoryData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />
+                    <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} stroke={isDark ? '#0f172a' : '#ffffff'} strokeWidth={2} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip contentStyle={tooltipStyle} itemStyle={{ color: isDark ? '#f1f5f9' : '#0f172a' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -553,7 +574,7 @@ export default function SmartDashboardView({ onNavigate }: SmartDashboardViewPro
         </div>
 
         {/* Department Compliance */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-3">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-sm font-bold text-slate-900 dark:text-white">Department Compliance</h2>
@@ -565,10 +586,10 @@ export default function SmartDashboardView({ onNavigate }: SmartDashboardViewPro
           <div className="h-48 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={departmentData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
-                <XAxis dataKey="name" tick={{ fontSize: 9 }} tickFormatter={(val) => val.split(' ')[0]} />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 9 }} />
-                <Tooltip />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} opacity={0.5} vertical={false} />
+                <XAxis dataKey="name" tick={{ fill: chartTextColor, fontSize: 9 }} tickLine={{ stroke: gridColor }} axisLine={{ stroke: gridColor }} tickFormatter={(val) => val.split(' ')[0]} />
+                <YAxis domain={[0, 100]} tick={{ fill: chartTextColor, fontSize: 9 }} tickLine={{ stroke: gridColor }} axisLine={{ stroke: gridColor }} />
+                <Tooltip cursor={{ fill: isDark ? '#1e293b' : '#f1f5f9' }} contentStyle={tooltipStyle} />
                 <Bar dataKey="Compliance" fill="#10b981" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -576,7 +597,7 @@ export default function SmartDashboardView({ onNavigate }: SmartDashboardViewPro
         </div>
 
         {/* Monthly Renewal Trend */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-3">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-sm font-bold text-slate-900 dark:text-white">Monthly Renewal Trend</h2>
@@ -594,10 +615,10 @@ export default function SmartDashboardView({ onNavigate }: SmartDashboardViewPro
                     <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
-                <XAxis dataKey="month" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} opacity={0.5} vertical={false} />
+                <XAxis dataKey="month" tick={{ fill: chartTextColor, fontSize: 10 }} tickLine={{ stroke: gridColor }} axisLine={{ stroke: gridColor }} />
+                <YAxis tick={{ fill: chartTextColor, fontSize: 10 }} tickLine={{ stroke: gridColor }} axisLine={{ stroke: gridColor }} />
+                <Tooltip contentStyle={tooltipStyle} />
                 <Area type="monotone" dataKey="renewals" stroke="#3b82f6" fillOpacity={1} fill="url(#colorRenew)" />
               </AreaChart>
             </ResponsiveContainer>
@@ -606,7 +627,7 @@ export default function SmartDashboardView({ onNavigate }: SmartDashboardViewPro
       </div>
 
       {/* 5. Upcoming Renewals Table */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs space-y-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h2 className="text-sm font-bold text-slate-900 dark:text-white">Upcoming Renewals</h2>
@@ -626,8 +647,8 @@ export default function SmartDashboardView({ onNavigate }: SmartDashboardViewPro
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-semibold bg-slate-50/50 dark:bg-slate-800/30">
+            <thead className="bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 text-[11px]">
+              <tr>
                 <th className="py-3 px-3.5 rounded-l-xl">Document Name</th>
                 <th className="py-3 px-3.5">Category</th>
                 <th className="py-3 px-3.5">Expiry Date</th>
@@ -636,7 +657,18 @@ export default function SmartDashboardView({ onNavigate }: SmartDashboardViewPro
                 <th className="py-3 px-3.5 text-right rounded-r-xl">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+            <motion.tbody 
+              initial="hidden" 
+              animate="visible" 
+              variants={{
+                hidden: { opacity: 0 },
+                visible: {
+                  opacity: 1,
+                  transition: { staggerChildren: 0.05 }
+                }
+              }} 
+              className="divide-y divide-slate-200 dark:divide-slate-800 text-slate-900 dark:text-slate-100"
+            >
               {upcomingExpirations.length > 0 ? (
                 upcomingExpirations.map((doc) => {
                   const daysLeft = getDaysLeft(doc.expiryDate);
@@ -644,14 +676,14 @@ export default function SmartDashboardView({ onNavigate }: SmartDashboardViewPro
                   const isSoon = daysLeft >= 0 && daysLeft <= 30;
 
                   return (
-                    <tr key={doc.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                    <MotionStaggerTableRow key={doc.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                       {/* Document Name */}
                       <td className="py-3 px-3.5 font-medium text-slate-900 dark:text-slate-100">
                         <div className="flex items-center gap-2">
                           <FileText className="w-4 h-4 text-slate-400 shrink-0" />
                           <div>
                             <p className="font-bold">{doc.title}</p>
-                            <p className="text-[10px] text-slate-400 font-mono">{doc.code}</p>
+                            <p className="text-[10px] text-slate-600 dark:text-slate-400 font-mono font-medium">{doc.code}</p>
                           </div>
                         </div>
                       </td>
@@ -664,7 +696,7 @@ export default function SmartDashboardView({ onNavigate }: SmartDashboardViewPro
                       </td>
 
                       {/* Expiry Date */}
-                      <td className="py-3 px-3.5 font-mono text-slate-700 dark:text-slate-300">
+                      <td className="py-3 px-3.5 font-mono text-slate-900 dark:text-slate-200 font-bold">
                         {doc.expiryDate}
                       </td>
 
@@ -701,17 +733,17 @@ export default function SmartDashboardView({ onNavigate }: SmartDashboardViewPro
                           Renew Document
                         </Button>
                       </td>
-                    </tr>
+                    </MotionStaggerTableRow>
                   );
                 })
               ) : (
-                <tr>
+                <motion.tr variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}>
                   <td colSpan={6} className="py-8 text-center text-slate-400 dark:text-slate-500">
                     No upcoming expirations found.
                   </td>
-                </tr>
+                </motion.tr>
               )}
-            </tbody>
+            </motion.tbody>
           </table>
         </div>
       </div>
@@ -730,23 +762,21 @@ export default function SmartDashboardView({ onNavigate }: SmartDashboardViewPro
         />
       )}
 
-      {/* Renewal Modal */}
-      {isRenewalModalOpen && selectedRecordForRenewal && (
-        <RenewalWorkflowModal
-          isOpen={isRenewalModalOpen}
-          onClose={() => {
-            setIsRenewalModalOpen(false);
-            setSelectedRecordForRenewal(null);
-          }}
-          onSuccess={() => {
-            setIsRenewalModalOpen(false);
-            setSelectedRecordForRenewal(null);
-            fetchDashboardData();
-          }}
-          record={selectedRecordForRenewal}
-          currentUser={activeUser}
-        />
-      )}
-    </div>
+      {/* Direct Renewal Modal */}
+      <RenewDocumentModal
+        isOpen={isRenewalModalOpen}
+        onClose={() => {
+          setIsRenewalModalOpen(false);
+          setSelectedRecordForRenewal(null);
+        }}
+        onSuccess={() => {
+          // You could reload dashboard data here if needed, 
+          // but React Query invalidation in the modal handles it.
+          if (fetchDashboardData) fetchDashboardData();
+        }}
+        record={selectedRecordForRenewal}
+        currentUser={activeUser}
+      />
+    </MotionView>
   );
 }

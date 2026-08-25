@@ -35,9 +35,9 @@ export default function GlobalSearchView() {
   return (
     <div className="space-y-6 text-slate-100 pb-12 max-w-4xl mx-auto">
       {/* Header Bar */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+      <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 shadow-xl space-y-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-blue-500/10 border border-blue-500/20 rounded-xl text-blue-400">
+          <div className="p-2.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-400">
             <Search className="w-6 h-6" />
           </div>
           <div>
@@ -57,7 +57,7 @@ export default function GlobalSearchView() {
             placeholder="Type keyword, license number, authority name..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-2xl pl-12 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 shadow-inner"
+            className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-12 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 shadow-inner"
           />
         </div>
       </div>
@@ -65,11 +65,11 @@ export default function GlobalSearchView() {
       {/* Results List */}
       <div className="space-y-3">
         {loading ? (
-          <div className="p-8 text-center text-slate-400 text-xs bg-slate-900 rounded-2xl border border-slate-800">
+          <div className="p-8 text-center text-slate-400 text-xs bg-slate-900 rounded-lg border border-slate-800">
             Searching records...
           </div>
         ) : query.trim() && results.length === 0 ? (
-          <div className="p-12 text-center text-slate-400 text-xs bg-slate-900 rounded-2xl border border-slate-800 space-y-2">
+          <div className="p-12 text-center text-slate-400 text-xs bg-slate-900 rounded-lg border border-slate-800 space-y-2">
             <p className="font-bold text-white text-sm">No Matching Compliance Records Found</p>
             <p>Try searching by permit code, department, or issuing authority.</p>
           </div>
@@ -77,7 +77,7 @@ export default function GlobalSearchView() {
           results.map((rec) => (
             <div
               key={rec.id}
-              className="p-4 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl flex items-center justify-between gap-4 transition shadow-lg"
+              className="p-4 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-lg flex items-center justify-between gap-4 transition shadow-lg"
             >
               <div className="space-y-1">
                 <div className="flex items-center gap-2">

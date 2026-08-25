@@ -8,6 +8,7 @@ export const apiClient: AxiosInstance = axios.create({
     'Content-Type': 'application/json',
   },
   timeout: 15000,
+  withCredentials: true,
 });
 
 // Request Interceptor: Attach JWT Token, User ID & Tenant Header
@@ -15,18 +16,30 @@ apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('complianceflow_token');
     if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+      if (typeof config.headers.set === 'function') {
+        config.headers.set('Authorization', `Bearer ${token}`);
+      } else {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
       if (token.startsWith('mock_jwt_token_')) {
         const userId = token.replace('mock_jwt_token_', '').trim();
         if (userId) {
-          config.headers['X-User-ID'] = userId;
+          if (typeof config.headers.set === 'function') {
+            config.headers.set('X-User-ID', userId);
+          } else {
+            config.headers['X-User-ID'] = userId;
+          }
         }
       }
     }
 
     const tenantId = localStorage.getItem('complianceflow_tenant_id');
     if (tenantId && config.headers) {
-      config.headers['X-Tenant-ID'] = tenantId;
+      if (typeof config.headers.set === 'function') {
+        config.headers.set('X-Tenant-ID', tenantId);
+      } else {
+        config.headers['X-Tenant-ID'] = tenantId;
+      }
     }
 
     return config;

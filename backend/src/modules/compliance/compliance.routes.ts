@@ -10,9 +10,7 @@ import {
   updateComplianceRecordSchema,
   complianceIdParamSchema,
   listComplianceRecordsQuerySchema,
-  requestRenewalSchema,
-  processRenewalSchema,
-  completeRenewalSchema,
+  directRenewalSchema,
 } from './compliance.validation.js';
 
 // Configure Multer for in-memory file uploads (PDF & Images)
@@ -35,6 +33,17 @@ const upload = multer({
     }
   },
 });
+
+const handleFileUpload = (req: any, res: any, next: any) => {
+  upload.single('file')(req, res, (err: any) => {
+    if (err instanceof multer.MulterError) {
+      return res.status(400).json({ status: 'error', message: `File upload error: ${err.message}` });
+    } else if (err) {
+      return res.status(400).json({ status: 'error', message: err.message || 'Unknown file upload error' });
+    }
+    next();
+  });
+};
 
 const router = Router();
 
@@ -61,13 +70,20 @@ router.get('/:id/history', validateRequest(complianceIdParamSchema), ComplianceC
 router.post(
   '/',
   authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER),
-  upload.single('file'),
+  handleFileUpload,
   validateRequest(createComplianceRecordSchema),
   ComplianceController.createComplianceRecord
 );
 
-// 5. Update Compliance Record
+// 5. Update Compliance Record (PATCH and PUT for compatibility)
 router.patch(
+  '/:id',
+  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER),
+  validateRequest(updateComplianceRecordSchema),
+  ComplianceController.updateComplianceRecord
+);
+
+router.put(
   '/:id',
   authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER),
   validateRequest(updateComplianceRecordSchema),
@@ -78,7 +94,7 @@ router.patch(
 router.post(
   '/:id/attachment',
   authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER),
-  upload.single('file'),
+  handleFileUpload,
   validateRequest(complianceIdParamSchema),
   ComplianceController.uploadAttachment
 );
@@ -107,29 +123,13 @@ router.delete(
   ComplianceController.deleteComplianceRecord
 );
 
-// 10. Step 1: Request Renewal
-router.post(
-  '/:id/renew/request',
+// 10. Direct Document Renewal
+router.patch(
+  '/:id/renew',
   authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE),
-  validateRequest(requestRenewalSchema),
-  ComplianceController.requestRenewal
-);
-
-// 11. Step 2: Process Renewal
-router.patch(
-  '/:id/renew/process',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER),
-  validateRequest(processRenewalSchema),
-  ComplianceController.processRenewal
-);
-
-// 12. Step 3: Complete Renewal
-router.patch(
-  '/:id/renew/complete',
-  authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER),
-  upload.single('file'),
-  validateRequest(completeRenewalSchema),
-  ComplianceController.completeRenewal
+  handleFileUpload,
+  validateRequest(directRenewalSchema),
+  ComplianceController.directRenew
 );
 
 export default router;

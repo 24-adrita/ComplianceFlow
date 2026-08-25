@@ -1,7 +1,8 @@
 import auth from '../../config/auth.js';
 import UserModel, { IUser } from '../user/user.model.js';
+import CompanyModel from '../company/company.model.js';
 import AuditLogModel from '../audit/audit.model.js';
-import { AuditAction, AuditEntity } from '../../common/constants/enums.js';
+import { AuditAction, AuditEntity, CompanyStatus } from '../../common/constants/enums.js';
 import { UserRole, UserStatus } from '../../common/types/role.types.js';
 import {
   RegisterInput,
@@ -12,11 +13,32 @@ import {
   UpdateProfileInput,
 } from './auth.validation.js';
 
+/**
+ * Generate a short, unique company code from the company name.
+ * e.g. "Bengal Manufacturing Ltd." → "BENGAL-A3F2"
+ */
+function generateCompanyCode(name: string): string {
+  const base = name
+    .toUpperCase()
+    .replace(/[^A-Z0-9 ]/g, '')
+    .trim()
+    .split(' ')[0]
+    .substring(0, 8);
+  const suffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return `${base}-${suffix}`;
+}
+
 export class AuthService {
   /**
-   * Register a new user in ComplianceFlow
+   * Register a new user in ComplianceFlow.
+   *
+   * Two modes:
+   *   - "create" (companyName provided): Creates a new Company + first ADMIN user.
+   *   - "join"   (companyCode provided): Finds the existing Company and registers
+   *              the user as a PENDING EMPLOYEE awaiting admin approval.
    */
   static async register(input: RegisterInput, ipAddress?: string, userAgent?: string) {
+    // 1. Prevent duplicate email registrations
     const existingUser = await UserModel.findOne({ email: input.email.toLowerCase() });
     if (existingUser) {
       const error = new Error('User with this email address already exists.') as Error & { statusCode?: number };
@@ -24,69 +46,174 @@ export class AuthService {
       throw error;
     }
 
-    // Register user via Better Auth core API
-    const authResult = await auth.api.signUpEmail({
-      body: {
-        email: input.email.toLowerCase(),
-        password: input.password,
+    // ----------------------------------------------------------------
+    // MODE: "create" — Register a new company and make this user ADMIN
+    // ----------------------------------------------------------------
+    if (input.companyName && input.companyName.trim().length >= 2) {
+      // Generate a unique company code
+      let companyCode = generateCompanyCode(input.companyName);
+      // Ensure uniqueness (retry once if collision)
+      const codeExists = await CompanyModel.findOne({ code: companyCode, isDeleted: false });
+      if (codeExists) {
+        companyCode = generateCompanyCode(input.companyName);
+      }
+
+      // Create the Company document
+      const company = await CompanyModel.create({
+        name: input.companyName.trim(),
+        code: companyCode,
+        registrationNumber: `REG-${Date.now()}`,  // Auto-generated; admin can update later
+        industry: input.industry || 'General',
+        contactEmail: input.email.toLowerCase(),
+        status: CompanyStatus.ACTIVE,
+        isDeleted: false,
+      });
+
+      // Register with Better Auth (handles password hashing + session)
+      let authResult;
+      try {
+        authResult = await auth.api.signUpEmail({
+          body: {
+            email: input.email.toLowerCase(),
+            password: input.password,
+            name: input.name,
+          },
+        });
+      } catch (authErr: any) {
+        // If Better Auth fails, clean up the company we just created
+        await CompanyModel.deleteOne({ _id: company._id });
+        throw new Error(authErr?.message || 'Authentication provider failed to create account.');
+      }
+
+      // Create the User document with ADMIN role linked to the new company
+      const dbUser = await UserModel.create({
         name: input.name,
-      },
-    });
-
-    if (!authResult || !authResult.user) {
-      throw new Error('Failed to create account through authentication provider.');
-    }
-
-    // Find or create extended user profile in MongoDB
-    let dbUser = await UserModel.findOne({ email: input.email.toLowerCase() });
-
-    if (!dbUser) {
-      dbUser = await UserModel.create({
-        name: input.name,
         email: input.email.toLowerCase(),
-        role: input.role || UserRole.EMPLOYEE,
+        role: UserRole.ADMIN,
         status: UserStatus.ACTIVE,
-        companyId: input.companyId || undefined,
-        departmentId: input.departmentId || undefined,
+        companyId: company._id,
         phoneNumber: input.phoneNumber || '',
       });
-    } else {
-      dbUser.name = input.name;
-      dbUser.role = input.role || dbUser.role;
-      if (input.companyId) dbUser.companyId = input.companyId as unknown as IUser['companyId'];
-      if (input.departmentId) dbUser.departmentId = input.departmentId as unknown as IUser['departmentId'];
-      if (input.phoneNumber) dbUser.phoneNumber = input.phoneNumber;
-      await dbUser.save();
+
+      // Audit log
+      await AuditLogModel.create({
+        userId: dbUser._id,
+        userEmail: dbUser.email,
+        userRole: dbUser.role,
+        companyId: company._id,
+        action: AuditAction.CREATE,
+        entity: AuditEntity.USER,
+        entityId: dbUser._id.toString(),
+        details: { method: 'EMAIL_REGISTER', role: dbUser.role, companyName: company.name, companyCode: company.code },
+        ipAddress: ipAddress || '',
+        userAgent: userAgent || '',
+      }).catch(() => {/* audit failures are non-fatal */});
+
+      return {
+        user: {
+          id: dbUser._id.toString(),
+          name: dbUser.name,
+          email: dbUser.email,
+          role: dbUser.role,
+          status: dbUser.status,
+          companyId: company._id.toString(),
+          createdAt: dbUser.createdAt,
+        },
+        company: {
+          id: company._id.toString(),
+          name: company.name,
+          code: company.code,
+          industry: company.industry,
+        },
+        token: authResult?.token || null,
+      };
     }
 
-    // Audit Log Entry
-    await AuditLogModel.create({
-      userId: dbUser._id,
-      userEmail: dbUser.email,
-      userRole: dbUser.role,
-      companyId: dbUser.companyId,
-      action: AuditAction.CREATE,
-      entity: AuditEntity.USER,
-      entityId: dbUser._id.toString(),
-      details: { method: 'EMAIL_REGISTER', role: dbUser.role },
-      ipAddress: ipAddress || '',
-      userAgent: userAgent || '',
-    });
+    // ----------------------------------------------------------------
+    // MODE: "join" — Join an existing company using companyCode
+    // ----------------------------------------------------------------
+    if (input.companyCode && input.companyCode.trim().length >= 2) {
+      const company = await CompanyModel.findOne({
+        code: input.companyCode.trim().toUpperCase(),
+        isDeleted: false,
+        status: CompanyStatus.ACTIVE,
+      });
 
-    return {
-      user: {
-        id: dbUser._id.toString(),
-        name: dbUser.name,
-        email: dbUser.email,
-        role: dbUser.role,
-        status: dbUser.status,
-        companyId: dbUser.companyId?.toString(),
-        departmentId: dbUser.departmentId?.toString(),
-        createdAt: dbUser.createdAt,
-      },
-      token: authResult.token || null,
-    };
+      if (!company) {
+        const error = new Error(
+          `No active company found with code '${input.companyCode.trim().toUpperCase()}'. Please verify with your administrator.`
+        ) as Error & { statusCode?: number };
+        error.statusCode = 404;
+        throw error;
+      }
+
+      // Register with Better Auth
+      let authResult;
+      try {
+        authResult = await auth.api.signUpEmail({
+          body: {
+            email: input.email.toLowerCase(),
+            password: input.password,
+            name: input.name,
+          },
+        });
+      } catch (authErr: any) {
+        throw new Error(authErr?.message || 'Authentication provider failed to create account.');
+      }
+
+      // Create the User document as PENDING EMPLOYEE — admin must approve
+      const dbUser = await UserModel.create({
+        name: input.name,
+        email: input.email.toLowerCase(),
+        role: UserRole.EMPLOYEE,
+        status: UserStatus.PENDING,
+        companyId: company._id,
+        phoneNumber: input.phoneNumber || '',
+      });
+
+      // Audit log
+      await AuditLogModel.create({
+        userId: dbUser._id,
+        userEmail: dbUser.email,
+        userRole: dbUser.role,
+        companyId: company._id,
+        action: AuditAction.CREATE,
+        entity: AuditEntity.USER,
+        entityId: dbUser._id.toString(),
+        details: { method: 'EMAIL_JOIN_COMPANY', role: dbUser.role, companyCode: input.companyCode },
+        ipAddress: ipAddress || '',
+        userAgent: userAgent || '',
+      }).catch(() => {/* audit failures are non-fatal */});
+
+      return {
+        user: {
+          id: dbUser._id.toString(),
+          name: dbUser.name,
+          email: dbUser.email,
+          role: dbUser.role,
+          status: dbUser.status,
+          companyId: company._id.toString(),
+          createdAt: dbUser.createdAt,
+        },
+        company: {
+          id: company._id.toString(),
+          name: company.name,
+          code: company.code,
+        },
+        token: authResult?.token || null,
+      };
+    }
+
+    // ----------------------------------------------------------------
+    // FALLBACK — Neither companyName nor companyCode provided
+    // ----------------------------------------------------------------
+    const error = new Error(
+      'Registration requires either a company name (to create a new company) or a company code (to join an existing company).'
+    ) as Error & { statusCode?: number };
+    error.statusCode = 400;
+    throw error;
   }
+
 
   /**
    * Authenticate user with Email and Password

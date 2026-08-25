@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from '../../common/types/express.types.js';
 import ComplianceService from './compliance.service.js';
+import ComplianceRecordModel from './compliance.model.js';
 
 export class ComplianceController {
   /**
@@ -126,13 +127,19 @@ export class ComplianceController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const record = await ComplianceService.updateComplianceRecord(
+      const record = await ComplianceRecordModel.findByIdAndUpdate(
         req.params.id,
         req.body,
-        req.user!,
-        req.ip,
-        req.get('user-agent')
+        { new: true, runValidators: true }
       );
+
+      if (!record) {
+        res.status(404).json({
+          success: false,
+          message: 'Compliance record not found.',
+        });
+        return;
+      }
 
       res.status(200).json({
         success: true,
@@ -271,72 +278,10 @@ export class ComplianceController {
   }
 
   /**
-   * POST /api/v1/documents/:id/renew/request
-   * Step 1: Request renewal for document
+   * PATCH /api/v1/compliance/:id/renew
+   * Direct Renewal Process
    */
-  static async requestRenewal(
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const record = await ComplianceService.requestRenewal(
-        req.params.id,
-        req.body,
-        req.user!,
-        req.ip,
-        req.get('user-agent')
-      );
-
-      res.status(200).json({
-        success: true,
-        status: 'success',
-        statusCode: 200,
-        message: 'Document renewal request submitted successfully.',
-        data: { record },
-        timestamp: new Date().toISOString(),
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * PATCH /api/v1/documents/:id/renew/process
-   * Step 2: Mark renewal as processing
-   */
-  static async processRenewal(
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const record = await ComplianceService.processRenewal(
-        req.params.id,
-        req.body,
-        req.user!,
-        req.ip,
-        req.get('user-agent')
-      );
-
-      res.status(200).json({
-        success: true,
-        status: 'success',
-        statusCode: 200,
-        message: 'Document renewal status moved to processing.',
-        data: { record },
-        timestamp: new Date().toISOString(),
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * PATCH /api/v1/documents/:id/renew/complete
-   * Step 3: Complete renewal, update issue/expiry dates & push to history
-   */
-  static async completeRenewal(
+  static async directRenew(
     req: AuthenticatedRequest,
     res: Response,
     next: NextFunction
@@ -345,7 +290,7 @@ export class ComplianceController {
       const fileBuffer = req.file ? req.file.buffer : undefined;
       const fileName = req.file ? req.file.originalname : undefined;
 
-      const record = await ComplianceService.completeRenewal(
+      const record = await ComplianceService.directRenew(
         req.params.id,
         req.body,
         req.user!,
@@ -359,7 +304,7 @@ export class ComplianceController {
         success: true,
         status: 'success',
         statusCode: 200,
-        message: 'Document renewal completed successfully.',
+        message: 'Document renewed successfully.',
         data: { record },
         timestamp: new Date().toISOString(),
       });

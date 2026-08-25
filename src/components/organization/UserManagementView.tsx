@@ -2,13 +2,24 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { UserCheck, Search, CheckCircle2, User } from 'lucide-react';
 import { ApiService } from '../../services/api';
 import { User as UserType } from '../../types';
-import { getRoleLabel } from '../../lib/permissions';
+import { getRoleLabel, getRoleCategory } from '../../lib/permissions';
+import { useAuth } from '../../context/AuthContext';
+import { Button } from '../ui/Button';
+import { motion } from 'motion/react';
 import toast from 'react-hot-toast';
 
 export default function UserManagementView() {
+  const { user, currentUser } = useAuth();
+  const activeUser = user || currentUser;
+  const isAdmin = getRoleCategory(activeUser?.role) === 'admin';
+
   const [users, setUsers] = useState<UserType[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [inviteData, setInviteData] = useState({ email: '', role: 'USER' });
+  const [isInviting, setIsInviting] = useState(false);
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
@@ -38,9 +49,9 @@ export default function UserManagementView() {
   return (
     <div className="space-y-6 pb-12">
       {/* Header Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/60 rounded-xl text-blue-600 dark:text-blue-400">
+          <div className="p-2.5 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/60 rounded-lg text-blue-600 dark:text-blue-400">
             <UserCheck className="w-5 h-5" />
           </div>
           <div>
@@ -50,10 +61,81 @@ export default function UserManagementView() {
             </p>
           </div>
         </div>
+        {isAdmin && (
+          <Button variant="primary" size="sm" onClick={() => setIsInviteModalOpen(true)}>
+            + Invite User
+          </Button>
+        )}
       </div>
 
+      {/* Invite Modal */}
+      {isInviteModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg max-w-sm w-full p-6 shadow-2xl space-y-4"
+          >
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">Invite New User</h3>
+            <div className="space-y-4 text-xs">
+              <div>
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Email Address</label>
+                <input
+                  type="email"
+                  value={inviteData.email}
+                  onChange={(e) => setInviteData({ ...inviteData, email: e.target.value })}
+                  placeholder="colleague@company.com"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Role</label>
+                <select
+                  value={inviteData.role}
+                  onChange={(e) => setInviteData({ ...inviteData, role: e.target.value })}
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="USER">User (Standard Access)</option>
+                  <option value="AUDITOR">Auditor (View Only)</option>
+                  <option value="ADMIN">Admin (Full Access)</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <Button variant="secondary" size="sm" onClick={() => setIsInviteModalOpen(false)}>Cancel</Button>
+              <Button 
+                variant="primary" 
+                size="sm" 
+                isLoading={isInviting}
+                onClick={async () => {
+                  if (!inviteData.email || !activeUser?.companyId) return;
+                  setIsInviting(true);
+                  try {
+                    await ApiService.inviteUser({ 
+                      email: inviteData.email, 
+                      role: inviteData.role, 
+                      companyId: activeUser.companyId 
+                    });
+                    toast.success('Invitation sent successfully!');
+                    setIsInviteModalOpen(false);
+                    setInviteData({ email: '', role: 'USER' });
+                    loadUsers();
+                  } catch (err) {
+                    toast.error('Failed to send invitation');
+                  } finally {
+                    setIsInviting(false);
+                  }
+                }}
+              >
+                Send Invite
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
       {/* Search Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-lg border border-slate-200 dark:border-slate-800 shadow-xs">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
           <input
@@ -61,7 +143,7 @@ export default function UserManagementView() {
             placeholder="Search by name, email or role..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -71,7 +153,7 @@ export default function UserManagementView() {
       </div>
 
       {/* Table */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 font-semibold text-[11px]">

@@ -101,6 +101,7 @@ export enum AuditAction {
   STATUS_CHANGE = 'STATUS_CHANGE',
   VERIFY = 'VERIFY',
   VERIFY_QR = 'VERIFY_QR',
+  DOCUMENT_RENEWED = 'DOCUMENT_RENEWED',
 }
 
 export enum AuditEntity {

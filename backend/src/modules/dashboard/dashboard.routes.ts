@@ -32,5 +32,15 @@ router.get(
   DashboardController.getCharts
 );
 
+/**
+ * GET /api/v1/dashboard/metrics
+ * Dashboard Metrics API (used by Workspace shell)
+ */
+router.get(
+  '/metrics',
+  validateRequest(dashboardOverviewQuerySchema),
+  DashboardController.getMetrics
+);
+
 export default router;
 

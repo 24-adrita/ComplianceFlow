@@ -67,7 +67,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`relative p-5 rounded-xl border ${t.bg} ${t.border} shadow-sm transition-all duration-200 hover:shadow-md ${onClick ? 'cursor-pointer hover:border-slate-300 dark:hover:border-slate-700' : ''}`}
+      className={`relative p-5 rounded-lg border ${t.bg} ${t.border} shadow-sm transition-all duration-200 hover:shadow-md ${onClick ? 'cursor-pointer hover:border-slate-300 dark:hover:border-slate-700' : ''}`}
     >
       <div className="flex items-start justify-between">
         <div>

@@ -14,6 +14,8 @@ import notificationRoutes from './modules/notification/notification.routes.js';
 import qrRoutes from './modules/qr/qr.routes.js';
 import calendarRoutes from './modules/calendar/calendar.routes.js';
 import searchRoutes from './modules/search/search.routes.js';
+import auditRoutes from './modules/audit/audit.routes.js';
+import reportsRoutes from './modules/reports/reports.routes.js';
 import setupSwagger from './docs/swagger.js';
 
 const app: Express = express();
@@ -87,6 +89,8 @@ app.use('/api/v1/qr', qrRoutes);
 app.use('/api/v1/verify', qrRoutes);
 app.use('/api/v1/calendar', calendarRoutes);
 app.use('/api/v1/search', searchRoutes);
+app.use('/api/v1/audit-logs', auditRoutes);
+app.use('/api/v1/reports', reportsRoutes);
 app.use('/verify', qrRoutes);
 
 // ==========================================

@@ -265,7 +265,7 @@ export class CalendarService {
         complianceId: item.complianceId?.toString(),
         renewalId: item.renewalId?.toString(),
         renewalCost: item.renewalCost,
-        currency: item.currency || 'USD',
+        currency: item.currency || 'BDT',
         company: item.company?.id ? item.company : undefined,
         department: item.department?.id ? item.department : undefined,
         daysRemaining,

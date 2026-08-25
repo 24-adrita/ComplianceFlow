@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import apiClient from '../lib/api-client';
 import { User, Company } from '../types';
 import toast from 'react-hot-toast';
@@ -30,6 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [tenantCompany, setTenantCompanyState] = useState<Company | null>(null);
+  const isInitialLoadRef = useRef<boolean>(true);
 
   // Sync token to localStorage
   const handleSetToken = (newToken: string | null) => {
@@ -94,6 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
     } finally {
       setIsLoading(false);
+      isInitialLoadRef.current = false;
     }
   }, [token, fetchCompaniesList]);
 
@@ -106,7 +108,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const handleUnauthorized = () => {
       handleSetToken(null);
       setUser(null);
-      toast.error('Session expired. Please log in again.');
+      if (!isInitialLoadRef.current) {
+        toast.error('Session expired. Please log in again.');
+      }
     };
 
     window.addEventListener('auth:unauthorized', handleUnauthorized);
@@ -117,6 +121,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       setIsLoading(true);
+      isInitialLoadRef.current = true; // Suspend unauthorized toasts during login transitions
       const res: any = await apiClient.post('/auth/login', { email, password });
       const payload = res?.data || res;
       if (payload && payload.token) {
@@ -126,11 +131,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(loggedUser);
         toast.success(`Welcome back, ${loggedUser.name}!`);
         await fetchCompaniesList();
+        isInitialLoadRef.current = false;
         return true;
       }
+      isInitialLoadRef.current = false;
       return false;
     } catch (err: any) {
       toast.error(err.message || 'Login failed. Please check your credentials.');
+      isInitialLoadRef.current = false;
       return false;
     } finally {
       setIsLoading(false);

@@ -224,12 +224,12 @@ export const buttonVariants = {
 } as const;
 
 export const cardVariants = {
-  default: 'bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-2xs rounded-xl',
-  elevated: 'bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-xl',
-  bordered: 'bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl',
-  interactive: 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600 transition-all cursor-pointer rounded-xl',
-  flat: 'bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800 rounded-xl',
-  glass: 'bg-white/95 dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs',
+  default: 'bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-2xs rounded-lg',
+  elevated: 'bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-lg',
+  bordered: 'bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg',
+  interactive: 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600 transition-all cursor-pointer rounded-lg',
+  flat: 'bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800 rounded-lg',
+  glass: 'bg-white/95 dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 rounded-lg shadow-xs',
 } as const;
 
 export const inputVariants = {

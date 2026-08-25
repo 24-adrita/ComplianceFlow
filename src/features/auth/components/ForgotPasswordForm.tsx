@@ -74,7 +74,7 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
         </div>
 
         {resetToken && (
-          <div className="p-3.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-left space-y-1.5">
+          <div className="p-3.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-left space-y-1.5">
             <div className="flex items-center gap-2 text-xs font-bold text-blue-700 dark:text-blue-300">
               <KeyRound className="w-4 h-4" />
               <span>Development Reset Token</span>
@@ -126,7 +126,7 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
           <Input
             label="Work Email Address"
             type="email"
-            placeholder="officer@acme.com"
+            placeholder="admin@bengalmanufacturing.com.bd"
             themeVariant="light"
             leftIcon={<Mail className="w-4 h-4 text-slate-400" />}
             error={errors.email?.message}

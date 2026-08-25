@@ -17,7 +17,7 @@ export const createRenewalRequestSchema = z.object({
       .min(0, 'Renewal cost cannot be negative')
       .optional()
       .default(0),
-    currency: z.string().optional().default('USD'),
+    currency: z.string().optional().default('BDT'),
     assignedTo: z.string().optional(),
     notes: z.string().optional().default(''),
   }),

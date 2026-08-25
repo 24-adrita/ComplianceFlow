@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { MotionView, MotionStaggerContainer, MotionStaggerItem, MotionStaggerTableRow } from '../common/MotionView';
 import { Button } from '../ui/Button';
 import {
   Search,
@@ -36,7 +37,7 @@ import { hasPermission, Permissions } from '../../lib/permissions';
 import { StatusBadge } from '../common/StatusBadge';
 import { RiskBadge } from '../common/RiskBadge';
 import { NewRecordModal } from '../modals/NewRecordModal';
-import { RenewalWorkflowModal } from '../modals/RenewalWorkflowModal';
+import { RenewDocumentModal } from '../modals/RenewDocumentModal';
 import toast from 'react-hot-toast';
 
 export default function ComplianceRecordsView() {
@@ -98,53 +99,76 @@ export default function ComplianceRecordsView() {
     return records.filter((rec) => {
       // Search query
       if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matchesTitle = rec.title.toLowerCase().includes(q);
-        const matchesCode = rec.code.toLowerCase().includes(q);
-        const matchesAuthority = rec.issuingAuthority.toLowerCase().includes(q);
-        const matchesTags = (rec.tags || []).some((t) => t.toLowerCase().includes(q));
+        const q = searchQuery.toLowerCase().trim();
+        const matchesTitle = (rec.title || (rec as any).documentName || '').toLowerCase().includes(q);
+        const matchesCode = (rec.code || (rec as any).licenseNumber || '').toLowerCase().includes(q);
+        const matchesAuthority = (rec.issuingAuthority || '').toLowerCase().includes(q);
+        const matchesTags = (rec.tags || []).some((t) => (t || '').toLowerCase().includes(q));
         if (!matchesTitle && !matchesCode && !matchesAuthority && !matchesTags) return false;
       }
 
+      // Safe normalization for category and risk
+      const recCategory = (rec.category || '').toLowerCase().trim();
+      
       // Category Filter
-      if (categoryFilter !== 'all' && rec.category !== categoryFilter) {
-        return false;
+      if (categoryFilter !== 'all') {
+        const filterCat = categoryFilter.toLowerCase().trim();
+        
+        const categoryEquivalents: Record<string, string[]> = {
+          'corporate & legal': ['corporate & legal', 'legal', 'corporate'],
+          'tax & financial': ['tax & financial', 'tax', 'financial', 'finance'],
+          'environmental & safety': ['environmental & safety', 'environmental', 'safety', 'ehs'],
+          'data privacy & iso': ['data privacy & iso', 'data privacy', 'iso', 'privacy'],
+          'hr & labor': ['hr & labor', 'hr', 'human resources', 'labor'],
+          'trade & export': ['trade & export', 'trade', 'export'],
+          'healthcare & fda': ['healthcare & fda', 'healthcare', 'fda', 'health'],
+          'operational license': ['operational license', 'operational', 'license']
+        };
+
+        const allowedMatches = categoryEquivalents[filterCat] || [filterCat];
+        if (!allowedMatches.includes(recCategory) && !allowedMatches.some(m => recCategory.includes(m))) {
+          return false;
+        }
       }
 
       // Department Filter
       if (departmentFilter !== 'all') {
-        // Map categories or department matching
         const catMap: Record<string, string[]> = {
           'Legal, Tax & Regulatory Affairs': ['Corporate & Legal', 'Tax & Financial', 'Data Privacy & ISO', 'Trade & Export'],
           'Environment, Health & Safety (EHS)': ['Environmental & Safety', 'Healthcare & FDA'],
           'Finance & Accounting': ['Tax & Financial', 'Operational License'],
           'Human Resources & Payroll': ['HR & Labor']
         };
-        const allowedCats = catMap[departmentFilter] || [];
-        if (allowedCats.length > 0 && !allowedCats.includes(rec.category)) {
+        const allowedCats = (catMap[departmentFilter] || []).map(c => c.toLowerCase().trim());
+        if (allowedCats.length > 0 && !allowedCats.includes(recCategory)) {
           return false;
         }
       }
 
       // Priority / Risk Level Filter
-      if (riskFilter !== 'all' && rec.riskLevel !== riskFilter) {
-        return false;
+      if (riskFilter !== 'all') {
+        const riskVal = String(rec.riskLevel || rec.priority || '').toLowerCase().replace(/[\s_-]+/g, '').replace('risk', '');
+        const targetVal = riskFilter.toLowerCase().replace(/[\s_-]+/g, '').replace('risk', '');
+        if (riskVal !== targetVal) {
+          return false;
+        }
       }
 
       // Status Filter
       if (statusFilter !== 'all') {
         const nowMs = Date.now();
-        const expMs = new Date(rec.expiryDate).getTime();
-        const daysLeft = Math.ceil((expMs - nowMs) / 86400000);
+        const expMs = rec.expiryDate ? new Date(rec.expiryDate).getTime() : 0;
+        const daysLeft = expMs ? Math.ceil((expMs - nowMs) / 86400000) : 0;
+        const recStatus = (rec.status || '').toLowerCase().replace(/_|-/g, ' ').trim();
 
         if (statusFilter === 'active') {
-          if (rec.status !== 'compliant' && daysLeft < 30) return false;
+          if (recStatus !== 'compliant' && recStatus !== 'active' && daysLeft < 30) return false;
         } else if (statusFilter === 'expiring_soon') {
-          if (rec.status !== 'warning' && (daysLeft < 0 || daysLeft >= 30)) return false;
+          if (recStatus !== 'warning' && recStatus !== 'expiring soon' && (daysLeft < 0 || daysLeft >= 30)) return false;
         } else if (statusFilter === 'expired') {
-          if (rec.status !== 'expired' && daysLeft >= 0) return false;
+          if (recStatus !== 'expired' && daysLeft >= 0) return false;
         } else if (statusFilter === 'renewed') {
-          if ((rec.status as string) !== 'renewed' && !(rec.notes && rec.notes.includes('[Renewed on'))) return false;
+          if (recStatus !== 'renewed' && !((rec.notes || '').includes('[Renewed on'))) return false;
         }
       }
 
@@ -214,19 +238,19 @@ export default function ComplianceRecordsView() {
   }).length;
 
   return (
-    <div className="space-y-6 pb-12 text-slate-100">
+    <MotionView className="space-y-6 pb-12 text-slate-900 dark:text-slate-100">
       {/* Page Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/90 border border-slate-800/90 rounded-2xl p-5 shadow-xl backdrop-blur-md">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xl backdrop-blur-md">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-xl text-blue-400">
+            <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-600 dark:text-blue-400">
               <FileCheck2 className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-tight font-display text-white">
+              <h1 className="text-xl font-bold tracking-tight font-display text-slate-900 dark:text-white">
                 Compliance Document Management
               </h1>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Centralized registry for corporate licenses, permits, tax filings, and regulatory records.
               </p>
             </div>
@@ -251,54 +275,54 @@ export default function ComplianceRecordsView() {
       </div>
 
       {/* Top Stat Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 shadow-lg flex items-center justify-between">
+      <MotionStaggerContainer className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <MotionStaggerItem className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-lg flex items-center justify-between hover:-translate-y-1 hover:shadow-xl transition-all duration-200">
           <div>
-            <span className="text-xs text-slate-400 font-medium">Total Managed</span>
-            <div className="text-2xl font-black text-white mt-1">{totalCount}</div>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Total Managed</span>
+            <div className="text-2xl font-black text-slate-900 dark:text-white mt-1">{totalCount}</div>
             <span className="text-[10px] text-slate-500">Official Licenses & Permits</span>
           </div>
-          <div className="p-3 bg-slate-800/80 rounded-xl text-slate-300">
+          <div className="p-3 bg-slate-100 dark:bg-slate-800/80 rounded-lg text-slate-600 dark:text-slate-300">
             <FileText className="w-5 h-5" />
           </div>
-        </div>
+        </MotionStaggerItem>
 
-        <div className="bg-slate-900/80 border border-emerald-500/20 rounded-2xl p-4 shadow-lg flex items-center justify-between">
+        <MotionStaggerItem className="bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-500/20 rounded-lg p-4 shadow-lg flex items-center justify-between hover:-translate-y-1 hover:shadow-xl transition-all duration-200">
           <div>
-            <span className="text-xs text-emerald-400 font-medium">Active & Valid</span>
-            <div className="text-2xl font-black text-white mt-1">{activeCount}</div>
-            <span className="text-[10px] text-emerald-400/70">100% Compliant</span>
+            <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Active & Valid</span>
+            <div className="text-2xl font-black text-slate-900 dark:text-white mt-1">{activeCount}</div>
+            <span className="text-[10px] text-emerald-600/70 dark:text-emerald-400/70">100% Compliant</span>
           </div>
-          <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400">
+          <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-600 dark:text-emerald-400">
             <CheckCircle2 className="w-5 h-5" />
           </div>
-        </div>
+        </MotionStaggerItem>
 
-        <div className="bg-slate-900/80 border border-amber-500/20 rounded-2xl p-4 shadow-lg flex items-center justify-between">
+        <MotionStaggerItem className="bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-500/20 rounded-lg p-4 shadow-lg flex items-center justify-between hover:-translate-y-1 hover:shadow-xl transition-all duration-200">
           <div>
-            <span className="text-xs text-amber-400 font-medium">Expiring Soon</span>
-            <div className="text-2xl font-black text-white mt-1">{expiringSoonCount}</div>
-            <span className="text-[10px] text-amber-400/70">Action Required &lt;30d</span>
+            <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">Expiring Soon</span>
+            <div className="text-2xl font-black text-slate-900 dark:text-white mt-1">{expiringSoonCount}</div>
+            <span className="text-[10px] text-amber-600/70 dark:text-amber-400/70">Action Required &lt;30d</span>
           </div>
-          <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400">
+          <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-600 dark:text-amber-400">
             <Clock className="w-5 h-5" />
           </div>
-        </div>
+        </MotionStaggerItem>
 
-        <div className="bg-slate-900/80 border border-rose-500/20 rounded-2xl p-4 shadow-lg flex items-center justify-between">
+        <MotionStaggerItem className="bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-500/20 rounded-lg p-4 shadow-lg flex items-center justify-between hover:-translate-y-1 hover:shadow-xl transition-all duration-200">
           <div>
-            <span className="text-xs text-rose-400 font-medium">Expired Documents</span>
-            <div className="text-2xl font-black text-white mt-1">{expiredCount}</div>
-            <span className="text-[10px] text-rose-400/70">Lapsed / Non-Compliant</span>
+            <span className="text-xs text-rose-600 dark:text-rose-400 font-medium">Expired Documents</span>
+            <div className="text-2xl font-black text-slate-900 dark:text-white mt-1">{expiredCount}</div>
+            <span className="text-[10px] text-rose-600/70 dark:text-rose-400/70">Lapsed / Non-Compliant</span>
           </div>
-          <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400">
+          <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-600 dark:text-rose-400">
             <ShieldAlert className="w-5 h-5" />
           </div>
-        </div>
-      </div>
+        </MotionStaggerItem>
+      </MotionStaggerContainer>
 
       {/* Controls Bar: Search & Filter Dropdowns */}
-      <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-4 shadow-xl space-y-3">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-xl space-y-3">
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
           {/* Search Input */}
           <div className="relative flex-1">
@@ -308,12 +332,12 @@ export default function ComplianceRecordsView() {
               placeholder="Search by license title, reference code, issuing authority, or tags..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition"
+              className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
+                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-700 dark:hover:text-white"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -334,16 +358,16 @@ export default function ComplianceRecordsView() {
         </div>
 
         {/* Filter Dropdowns Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2 border-t border-slate-800/80">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2 border-t border-slate-200 dark:border-slate-800">
           {/* Category Filter */}
           <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+            <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
               Category
             </label>
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="w-full bg-slate-950/80 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500"
             >
               <option value="all">All Categories</option>
               <option value="Corporate & Legal">Corporate & Legal</option>
@@ -359,13 +383,13 @@ export default function ComplianceRecordsView() {
 
           {/* Department Filter */}
           <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+            <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
               Department
             </label>
             <select
               value={departmentFilter}
               onChange={(e) => setDepartmentFilter(e.target.value)}
-              className="w-full bg-slate-950/80 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500"
             >
               <option value="all">All Departments</option>
               <option value="Legal, Tax & Regulatory Affairs">Legal & Regulatory</option>
@@ -377,13 +401,13 @@ export default function ComplianceRecordsView() {
 
           {/* Priority / Risk Filter */}
           <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+            <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
               Risk Priority
             </label>
             <select
               value={riskFilter}
               onChange={(e) => setRiskFilter(e.target.value)}
-              className="w-full bg-slate-950/80 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500"
             >
               <option value="all">All Priorities</option>
               <option value="low">Low Risk</option>
@@ -395,13 +419,13 @@ export default function ComplianceRecordsView() {
 
           {/* Status Filter */}
           <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+            <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
               Validity Status
             </label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full bg-slate-950/80 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500"
             >
               <option value="all">All Statuses</option>
               <option value="active">Active</option>
@@ -414,10 +438,10 @@ export default function ComplianceRecordsView() {
       </div>
 
       {/* Digital Records Table Card */}
-      <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl shadow-xl overflow-hidden">
-        <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-white">Digital Record Vault</span>
+            <span className="text-xs font-bold text-slate-900 dark:text-white">Digital Record Vault</span>
             <span className="px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-[10px] font-bold text-blue-400">
               {filteredRecords.length} Documents
             </span>
@@ -444,14 +468,14 @@ export default function ComplianceRecordsView() {
         {/* Table Content */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-950/80 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800 text-[10px]">
+            <thead className="bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-800 text-[10px]">
               <tr>
                 <th className="p-3 text-center w-10">
                   <input
                     type="checkbox"
                     checked={paginatedRecords.length > 0 && selectedIds.length === paginatedRecords.length}
                     onChange={(e) => handleSelectAll(e.target.checked)}
-                    className="rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-0 cursor-pointer"
+                    className="rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-blue-600 focus:ring-0 cursor-pointer"
                   />
                 </th>
                 <th className="p-3">Document Title & Code</th>
@@ -464,22 +488,33 @@ export default function ComplianceRecordsView() {
                 <th className="p-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <motion.tbody 
+              initial="hidden" 
+              animate="visible" 
+              variants={{
+                hidden: { opacity: 0 },
+                visible: {
+                  opacity: 1,
+                  transition: { staggerChildren: 0.05 }
+                }
+              }} 
+              className="divide-y divide-slate-200 dark:divide-slate-800 text-slate-900 dark:text-slate-100"
+            >
               {loading ? (
-                <tr>
-                  <td colSpan={9} className="p-8 text-center text-slate-400">
+                <motion.tr variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}>
+                  <td colSpan={9} className="p-8 text-center text-slate-500 dark:text-slate-400">
                     <div className="flex items-center justify-center gap-2">
                       <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                       <span>Fetching compliance records...</span>
                     </div>
                   </td>
-                </tr>
+                </motion.tr>
               ) : paginatedRecords.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="p-8 text-center text-slate-400">
+                <motion.tr variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}>
+                  <td colSpan={9} className="p-8 text-center text-slate-500 dark:text-slate-400">
                     No compliance records match the specified filters.
                   </td>
-                </tr>
+                </motion.tr>
               ) : (
                 paginatedRecords.map((rec) => {
                   const companyObj = companies.find((c) => c.id === rec.companyId);
@@ -487,9 +522,9 @@ export default function ComplianceRecordsView() {
                   const daysLeft = Math.ceil((new Date(rec.expiryDate).getTime() - Date.now()) / 86400000);
 
                   return (
-                    <tr
+                    <MotionStaggerTableRow
                       key={rec.id}
-                      className={`hover:bg-slate-800/40 transition-colors ${isSelected ? 'bg-blue-500/5' : ''}`}
+                      className={`hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors ${isSelected ? 'bg-blue-500/5' : ''}`}
                     >
                       {/* Checkbox */}
                       <td className="p-3 text-center">
@@ -497,17 +532,17 @@ export default function ComplianceRecordsView() {
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => handleToggleSelect(rec.id)}
-                          className="rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-0 cursor-pointer"
+                          className="rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-blue-600 focus:ring-0 cursor-pointer"
                         />
                       </td>
 
                       {/* Title & Code */}
                       <td className="p-3">
-                        <div className="font-bold text-white hover:text-blue-400 cursor-pointer" onClick={() => setViewingRecord(rec)}>
-                          {rec.title}
+                        <div className="font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer" onClick={() => setViewingRecord(rec)}>
+                          {rec.title || (rec as any).documentName}
                         </div>
-                        <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400 font-mono">
-                          <span>{rec.code}</span>
+                        <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-600 dark:text-slate-400 font-mono font-medium">
+                          <span>{rec.code || (rec as any).licenseNumber}</span>
                           {rec.tags && rec.tags.length > 0 && (
                             <span className="text-slate-500">• {rec.tags.join(', ')}</span>
                           )}
@@ -516,19 +551,19 @@ export default function ComplianceRecordsView() {
 
                       {/* Company & Category */}
                       <td className="p-3">
-                        <div className="text-slate-200 font-medium">{companyObj?.name || 'Group Enterprise'}</div>
-                        <div className="text-[10px] text-slate-400">{rec.category}</div>
+                        <div className="text-slate-900 dark:text-slate-200 font-medium">{companyObj?.name || 'Group Enterprise'}</div>
+                        <div className="text-[10px] text-slate-600 dark:text-slate-400 font-medium">{rec.category}</div>
                       </td>
 
                       {/* Authority */}
-                      <td className="p-3 text-slate-300 font-medium">
+                      <td className="p-3 text-slate-600 dark:text-slate-300 font-medium">
                         {rec.issuingAuthority || 'N/A'}
                       </td>
 
                       {/* Expiry Date */}
                       <td className="p-3">
-                        <div className="font-bold text-slate-200">{rec.expiryDate}</div>
-                        <div className={`text-[10px] font-semibold ${daysLeft < 0 ? 'text-rose-400' : daysLeft < 30 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                        <div className="font-bold text-slate-900 dark:text-slate-200">{rec.expiryDate}</div>
+                        <div className={`text-[10px] font-semibold ${daysLeft < 0 ? 'text-rose-600 dark:text-rose-400' : daysLeft < 30 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
                           {daysLeft < 0 ? `${Math.abs(daysLeft)}d overdue` : `${daysLeft}d remaining`}
                         </div>
                       </td>
@@ -557,7 +592,7 @@ export default function ComplianceRecordsView() {
                             <span>PDF</span>
                           </a>
                         ) : (
-                          <span className="text-slate-600 text-[10px] italic">None</span>
+                          <span className="text-slate-500 dark:text-slate-400 text-[10px] italic">None</span>
                         )}
                       </td>
 
@@ -603,22 +638,22 @@ export default function ComplianceRecordsView() {
                           )}
                         </div>
                       </td>
-                    </tr>
+                    </MotionStaggerTableRow>
                   );
                 })
               )}
-            </tbody>
+            </motion.tbody>
           </table>
         </div>
 
         {/* Pagination Controls */}
-        <div className="p-4 border-t border-slate-800 bg-slate-950/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
+        <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-400">
           <div className="flex items-center gap-2">
             <span>Rows per page:</span>
             <select
               value={itemsPerPage}
               onChange={(e) => setItemsPerPage(Number(e.target.value))}
-              className="bg-slate-900 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none"
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded px-2 py-1 text-slate-900 dark:text-slate-200 focus:outline-none"
             >
               <option value={5}>5</option>
               <option value={10}>10</option>
@@ -688,8 +723,8 @@ export default function ComplianceRecordsView() {
         currentUser={user}
       />
 
-      {/* 3-Step Renewal Workflow Modal */}
-      <RenewalWorkflowModal
+      {/* Direct Renewal Modal */}
+      <RenewDocumentModal
         isOpen={isRenewalModalOpen}
         onClose={() => {
           setIsRenewalModalOpen(false);
@@ -703,9 +738,21 @@ export default function ComplianceRecordsView() {
       />
 
       {/* View Record Details Drawer Modal */}
-      {viewingRecord && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-2xl relative">
+      <AnimatePresence>
+        {viewingRecord && (
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }} 
+            className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }} 
+              animate={{ scale: 1, opacity: 1 }} 
+              exit={{ scale: 0.95, opacity: 0 }} 
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="bg-slate-900 border border-slate-800 rounded-lg max-w-xl w-full p-6 space-y-4 shadow-2xl relative"
+            >
             <button
               onClick={() => setViewingRecord(null)}
               className="absolute right-4 top-4 text-slate-400 hover:text-white"
@@ -715,13 +762,13 @@ export default function ComplianceRecordsView() {
 
             <div className="flex items-center gap-2">
               <FileCheck2 className="w-5 h-5 text-blue-400" />
-              <h3 className="text-lg font-bold text-white">{viewingRecord.title}</h3>
+              <h3 className="text-lg font-bold text-white">{viewingRecord.title || (viewingRecord as any).documentName}</h3>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 bg-slate-950 p-4 rounded-xl text-xs space-y-2">
+            <div className="grid grid-cols-2 gap-3 bg-slate-950 p-4 rounded-lg text-xs space-y-2">
               <div>
                 <span className="text-slate-400 block text-[10px] uppercase font-bold">Reference Code</span>
-                <span className="font-mono text-white font-bold">{viewingRecord.code}</span>
+                <span className="font-mono text-white font-bold">{viewingRecord.code || (viewingRecord as any).licenseNumber}</span>
               </div>
 
               <div>
@@ -751,7 +798,7 @@ export default function ComplianceRecordsView() {
             </div>
 
             {viewingRecord.notes && (
-              <div className="bg-slate-950 p-3 rounded-xl text-xs text-slate-300">
+              <div className="bg-slate-950 p-3 rounded-lg text-xs text-slate-300">
                 <span className="text-slate-400 text-[10px] uppercase font-bold block mb-1">Notes & Filing Specs</span>
                 {viewingRecord.notes}
               </div>
@@ -766,9 +813,10 @@ export default function ComplianceRecordsView() {
                 Close
               </Button>
             </div>
-          </div>
-        </div>
-      )}
-    </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </MotionView>
   );
 }

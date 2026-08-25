@@ -1,4 +1,5 @@
 import { betterAuth } from 'better-auth';
+import { mongodbAdapter } from 'better-auth/adapters/mongodb';
 import { bearer, jwt, admin } from 'better-auth/plugins';
 import mongoose from 'mongoose';
 import { env } from './env.js';
@@ -7,19 +8,28 @@ import { UserRole, UserStatus } from '../common/types/role.types.js';
 /**
  * Better Auth Server-Side Instance Configuration
  * Manages Authentication, Session Cookies, Bearer / JWT Tokens, Password Hashing, and Role-Based Access Control (RBAC).
+ *
+ * IMPORTANT: auth.ts is imported at module-load time. The mongodbAdapter() call
+ * is wrapped in a lazy getter so mongoose.connection.getClient() is only accessed
+ * AFTER connectDB() has completed (i.e., when auth.api methods are first invoked).
  */
+
+import { MongoClient } from 'mongodb';
+
+// Instantiate a separate client for Better Auth to prevent timing issues with Mongoose connection
+const client = new MongoClient(env.MONGODB_URI);
+const db = client.db();
+
 export const auth = betterAuth({
   appName: 'ComplianceFlow',
   baseURL: env.BETTER_AUTH_URL,
   secret: env.BETTER_AUTH_SECRET,
 
-  // MongoDB Connection Adapter via Mongoose Connection Instance
-  database: mongoose.connection.db
-    ? {
-        db: mongoose.connection.db,
-        type: 'mongodb' as const,
-      }
-    : undefined,
+  // Use the official Better Auth MongoDB adapter
+  database: mongodbAdapter(db, { client }),
+
+
+
 
   // Email and Password Credential Authentication Strategy
   emailAndPassword: {

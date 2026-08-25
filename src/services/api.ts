@@ -15,26 +15,17 @@ const API_BASE = '/api';
 export const ApiService = {
   // Auth
   login: async (email: string) => {
-    const res = await fetch(`${API_BASE}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email })
-    });
-    return res.json();
+    return apiClient.post('/auth/login', { email });
   },
 
   getMe: async (userId: string) => {
-    const res = await fetch(`${API_BASE}/auth/me`, {
-      headers: { 'x-user-id': userId }
-    });
-    return res.json();
+    return apiClient.get('/auth/me');
   },
 
   // Dashboard Metrics & Analytics
   getDashboardMetrics: async (companyId?: string): Promise<{ success: boolean; metrics: DashboardMetrics }> => {
     const query = companyId && companyId !== 'all' ? `?companyId=${companyId}` : '';
-    const res = await fetch(`${API_BASE}/dashboard/metrics${query}`);
-    return res.json();
+    return apiClient.get(`/dashboard/metrics${query}`);
   },
 
   getDashboardOverview: async (companyId?: string, departmentId?: string): Promise<{ success: boolean; data: DashboardOverviewData; message?: string }> => {
@@ -54,136 +45,110 @@ export const ApiService = {
 
     return apiClient.get(`/dashboard/charts${queryString}`);
   },
-  // Companies
   getCompanies: async (): Promise<{ success: boolean; companies: Company[] }> => {
-    const res = await fetch(`${API_BASE}/companies`);
-    return res.json();
+    const res: any = await apiClient.get('/companies');
+    return { success: res.success || res.status === 'success', companies: res.data?.companies || [] };
   },
 
   createCompany: async (companyData: Partial<Company>): Promise<{ success: boolean; company: Company }> => {
-    const res = await fetch(`${API_BASE}/companies`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(companyData)
-    });
-    return res.json();
+    return apiClient.post('/companies', companyData);
   },
 
   updateCompany: async (id: string, updates: Partial<Company>): Promise<{ success: boolean; company: Company }> => {
-    const res = await fetch(`${API_BASE}/companies/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updates)
-    });
-    return res.json();
+    return apiClient.patch(`/companies/${id}`, updates);
+  },
+
+  // Departments
+  getDepartments: async (companyId?: string): Promise<{ success: boolean; departments: any[] }> => {
+    const qParams = new URLSearchParams();
+    if (companyId && companyId !== 'all') qParams.append('companyId', companyId);
+    
+    const res: any = await apiClient.get(`/departments?${qParams.toString()}`);
+    return { success: res.success || res.status === 'success', departments: res.data?.departments || res.departments || [] };
+  },
+
+  createDepartment: async (deptData: { name: string; companyId: string }): Promise<{ success: boolean; department: any }> => {
+    return apiClient.post('/departments', deptData);
+  },
+
+  deleteDepartment: async (id: string): Promise<{ success: boolean }> => {
+    return apiClient.delete(`/departments/${id}`);
   },
 
   // Users
   getUsers: async (): Promise<{ success: boolean; users: User[] }> => {
-    const res = await fetch(`${API_BASE}/users`);
-    return res.json();
+    const res: any = await apiClient.get('/users');
+    return { success: res.success || res.status === 'success', users: res.data?.users || [] };
   },
 
   createUser: async (userData: Partial<User>): Promise<{ success: boolean; user: User }> => {
-    const res = await fetch(`${API_BASE}/users`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(userData)
+    return apiClient.post('/users', userData);
+  },
+  
+  inviteUser: async (inviteData: { email: string; role: string; companyId: string }): Promise<{ success: boolean }> => {
+    return apiClient.post('/users', { 
+      email: inviteData.email,
+      role: inviteData.role,
+      companyId: inviteData.companyId,
+      name: inviteData.email.split('@')[0], // Default name
+      password: 'TemporaryPassword123!', // Auto-generated temporary password
     });
-    return res.json();
   },
 
   updateUser: async (id: string, updates: Partial<User>): Promise<{ success: boolean; user: User }> => {
-    const res = await fetch(`${API_BASE}/users/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updates)
-    });
-    return res.json();
+    return apiClient.put(`/users/${id}`, updates);
   },
 
   // Compliance Records
   getComplianceRecords: async (companyId?: string): Promise<{ success: boolean; records: ComplianceRecord[] }> => {
-    const query = companyId && companyId !== 'all' ? `?companyId=${companyId}` : '';
-    const res = await fetch(`${API_BASE}/compliance-records${query}`);
-    return res.json();
+    const queryParams = new URLSearchParams();
+    if (companyId && companyId !== 'all') queryParams.append('companyId', companyId);
+    queryParams.append('limit', '1000'); // Fetch enough for client-side pagination to work correctly
+    
+    const res: any = await apiClient.get(`/compliance?${queryParams.toString()}`);
+    const unwrappedRecords = res.data?.records || res.records || (Array.isArray(res.data) ? res.data : []);
+    return { success: res.success || res.status === 'success', records: unwrappedRecords };
   },
 
-  createComplianceRecord: async (recordData: Partial<ComplianceRecord>, user: User): Promise<{ success: boolean; record: ComplianceRecord }> => {
-    const res = await fetch(`${API_BASE}/compliance-records`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-user-id': user.id,
-        'x-user-name': user.name,
-        'x-user-role': user.role
-      },
-      body: JSON.stringify(recordData)
-    });
-    return res.json();
+  createComplianceRecord: async (recordData: Partial<ComplianceRecord> | FormData): Promise<{ success: boolean; record: ComplianceRecord }> => {
+    return apiClient.post('/compliance', recordData);
   },
 
-  updateComplianceRecord: async (id: string, updates: Partial<ComplianceRecord>, user: User): Promise<{ success: boolean; record: ComplianceRecord }> => {
-    const res = await fetch(`${API_BASE}/compliance-records/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-user-id': user.id,
-        'x-user-name': user.name,
-        'x-user-role': user.role
-      },
-      body: JSON.stringify(updates)
-    });
-    return res.json();
+  updateComplianceRecord: async (id: string, updates: Partial<ComplianceRecord> | FormData): Promise<{ success: boolean; record: ComplianceRecord }> => {
+    return apiClient.put(`/compliance/${id}`, updates);
   },
 
   deleteComplianceRecord: async (id: string, user: User): Promise<{ success: boolean; message: string }> => {
-    const res = await fetch(`${API_BASE}/compliance-records/${id}`, {
-      method: 'DELETE',
-      headers: {
-        'x-user-id': user.id,
-        'x-user-name': user.name,
-        'x-user-role': user.role
-      }
-    });
-    return res.json();
+    return apiClient.delete(`/compliance/${id}`);
   },
 
-  advanceRenewalWorkflow: async (id: string, step: ComplianceRecord['renewalStep'], notes: string, user: User): Promise<{ success: boolean; record: ComplianceRecord }> => {
-    const res = await fetch(`${API_BASE}/compliance-records/${id}/advance-renewal`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-user-id': user.id,
-        'x-user-name': user.name,
-        'x-user-role': user.role
-      },
-      body: JSON.stringify({ step, notes })
-    });
-    return res.json();
+  directRenewComplianceRecord: async (id: string, formData: FormData): Promise<{ success: boolean; record: ComplianceRecord }> => {
+    // We use patch for the renewal endpoint. FormData handles the file and text fields.
+    // Allow Axios to set Content-Type automatically to include the boundary
+    return apiClient.patch(`/compliance/${id}/renew`, formData);
   },
 
   verifyQRToken: async (token: string) => {
-    const res = await fetch(`${API_BASE}/qr/verify/${encodeURIComponent(token)}`);
-    return res.json();
+    return apiClient.get(`/qr/verify/${encodeURIComponent(token)}`);
   },
 
   verifyQRCode: async (qrCodeId: string): Promise<{ success: boolean; record?: ComplianceRecord; message?: string }> => {
     try {
-      const res = await fetch(`${API_BASE}/v1/verify/${encodeURIComponent(qrCodeId)}`);
-      if (res.ok) return res.json();
-      const res2 = await fetch(`${API_BASE}/qr/verify/${encodeURIComponent(qrCodeId)}`);
-      return res2.json();
+      return await apiClient.get(`/verify/${encodeURIComponent(qrCodeId)}`);
     } catch (err) {
-      return { success: false, message: 'Failed to reach verification endpoint' };
+      try {
+        return await apiClient.get(`/qr/verify/${encodeURIComponent(qrCodeId)}`);
+      } catch (e) {
+        return { success: false, message: 'Failed to reach verification endpoint' };
+      }
     }
   },
 
   getRenewalPipeline: async (): Promise<{ success: boolean; renewals: any[] }> => {
     try {
-      const res = await fetch(`${API_BASE}/renewals`);
-      if (res.ok) return res.json();
-      return { success: true, renewals: [] };
+      const res: any = await apiClient.get('/renewals');
+      const unwrappedRenewals = res.data?.renewals || res.renewals || res.data?.records || res.records || (Array.isArray(res.data) ? res.data : []);
+      return { success: res.success || res.status === 'success', renewals: unwrappedRenewals };
     } catch (err) {
       return { success: true, renewals: [] };
     }
@@ -195,35 +160,30 @@ export const ApiService = {
     if (params.category && params.category !== 'all') qParams.append('category', params.category);
     if (params.companyId && params.companyId !== 'all') qParams.append('companyId', params.companyId);
     
-    const res = await fetch(`${API_BASE}/search?${qParams.toString()}`);
-    return res.json();
+    return apiClient.get(`/search?${qParams.toString()}`);
   },
 
   // Notifications
   getNotifications: async (userId: string): Promise<{ success: boolean; notifications: NotificationItem[] }> => {
-    const res = await fetch(`${API_BASE}/notifications?userId=${userId}`);
-    return res.json();
+    const res: any = await apiClient.get(`/notifications`);
+    const unwrappedNotifications = res.data?.notifications || res.notifications || (Array.isArray(res.data) ? res.data : []) || [];
+    return { success: res.success || res.status === 'success', notifications: unwrappedNotifications };
   },
 
   markNotificationRead: async (id: string) => {
-    const res = await fetch(`${API_BASE}/notifications/${id}/read`, { method: 'PUT' });
-    return res.json();
+    return apiClient.patch(`/notifications/${id}/read`);
   },
 
   sendEmailReminder: async (recordId: string, recipientEmail?: string) => {
-    const res = await fetch(`${API_BASE}/reminders/trigger-email`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ recordId, recipientEmail })
-    });
-    return res.json();
+    return apiClient.post('/reminders/trigger-email', { recordId, recipientEmail });
   },
 
   // Audit Logs
   getAuditLogs: async (companyId?: string): Promise<{ success: boolean; auditLogs: AuditLog[] }> => {
     const query = companyId && companyId !== 'all' ? `?companyId=${companyId}` : '';
-    const res = await fetch(`${API_BASE}/audit-logs${query}`);
-    return res.json();
+    const res: any = await apiClient.get(`/audit-logs${query}`);
+    const unwrappedLogs = res.data?.auditLogs || res.auditLogs || res.data?.logs || res.logs || (Array.isArray(res.data) ? res.data : []) || [];
+    return { success: res.success || res.status === 'success', auditLogs: unwrappedLogs };
   },
 
   getAuditLogsFiltered: async (params: {
@@ -250,14 +210,27 @@ export const ApiService = {
     if (params.page) qParams.append('page', params.page.toString());
     if (params.limit) qParams.append('limit', params.limit.toString());
 
-    const res = await fetch(`${API_BASE}/audit-logs?${qParams.toString()}`);
-    return res.json();
+    return apiClient.get(`/audit-logs?${qParams.toString()}`);
   },
 
   getAuditMetrics: async (companyId?: string) => {
     const query = companyId && companyId !== 'all' ? `?companyId=${companyId}` : '';
-    const res = await fetch(`${API_BASE}/audit-logs/metrics${query}`);
-    return res.json();
+    return apiClient.get(`/audit-logs/metrics${query}`);
+  },
+
+  // Export CSV Helper
+  exportCsvReport: async (type: 'summary' | 'expired' | 'renewals', companyId?: string): Promise<void> => {
+    const scope = companyId && companyId !== 'all' ? `?companyId=${companyId}` : '';
+    const blob: Blob = await apiClient.get(`/reports/${type}-csv${scope}`, { responseType: 'blob' }) as unknown as Blob;
+    
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${type}-report.csv`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
   }
 };
 

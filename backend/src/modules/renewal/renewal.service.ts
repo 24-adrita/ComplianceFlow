@@ -141,7 +141,7 @@ export class RenewalService {
       newIssueDate,
       newLicenseNumber: input.newLicenseNumber ? input.newLicenseNumber.trim() : undefined,
       renewalCost: input.renewalCost || 0,
-      currency: (input.currency || 'USD').toUpperCase(),
+      currency: (input.currency || 'BDT').toUpperCase(),
       status: initialStatus,
       attachmentUrl,
       attachmentPublicId,
